@@ -40,3 +40,10 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Build Windows app
         run: dotnet build windows/Appreciate.csproj
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Linux app syntax
+        run: python3 -m py_compile linux/appreciate.py && python3 -m py_compile linux/overlay.py && python3 -m py_compile linux/settings.py

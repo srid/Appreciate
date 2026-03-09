@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Appreciate
+Comment=Enjoy & appreciate being alive
+Exec=appreciate
+Icon=appreciate
+Terminal=false
+Type=Application
+Categories=Utility;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true
