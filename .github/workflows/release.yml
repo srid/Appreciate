@@ -92,22 +92,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3 python3-gi gir1.2-gtk-4.0 libgtk-4-dev
-
-      - name: Verify syntax
-        run: python3 -m py_compile linux/appreciate.py && python3 -m py_compile linux/overlay.py && python3 -m py_compile linux/settings.py
+      - name: Build Linux app
+        run: nix build .#linux
 
       - name: Package Linux app
         run: |
           mkdir -p Appreciate-Linux
-          cp linux/*.py linux/appreciate.desktop Appreciate-Linux/
-          echo '#!/bin/bash' > Appreciate-Linux/run.sh
-          echo 'cd "$(dirname "$0")" && exec python3 appreciate.py "$@"' >> Appreciate-Linux/run.sh
-          chmod +x Appreciate-Linux/run.sh
+          cp -rL result/bin/* Appreciate-Linux/
+          cp linux/appreciate.desktop Appreciate-Linux/
           tar czf "Appreciate-Linux-${{ inputs.version }}.tar.gz" Appreciate-Linux/
 
       - name: Upload Linux archive

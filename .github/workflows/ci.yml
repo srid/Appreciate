@@ -45,5 +45,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify Linux app syntax
-        run: python3 -m py_compile linux/appreciate.py && python3 -m py_compile linux/overlay.py && python3 -m py_compile linux/settings.py
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Build Linux app
+        run: nix build .#linux

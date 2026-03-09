@@ -384,6 +384,26 @@ h2 {
     line-height: 1.6;
 }
 
+.badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 20px;
+    vertical-align: middle;
+}
+
+.badge-beta {
+    background: rgba(245, 166, 35, 0.2);
+    color: var(--accent-amber);
+}
+
+.badge-exp {
+    background: rgba(138, 138, 154, 0.2);
+    color: var(--text-muted);
+}
+
 /* ===== Open Source ===== */
 .oss {
     text-align: center;
