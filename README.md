@@ -4,7 +4,7 @@
 
 # Appreciate ✨
 
-A tiny app that periodically flashes a reminder across your screen — **"Enjoy and appreciate being alive"** — to nudge you back into the present moment.
+A tiny app that periodically flashes a reminder across your screen — **"Enjoy and appreciate being alive"** — as a prompt to get back to feeling good, each moment again.
 
 The text is rendered as a transparent overlay directly on your screen (not a system notification), then fades away. Interval, position, font size, color, and style are all **randomized** to prevent habituation.
 
