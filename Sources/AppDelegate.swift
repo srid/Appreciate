@@ -68,7 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showReminder() {
         guard settings.isEnabled else { return }
         overlayManager.showOverlay(
-            text: settings.reminderText,
+            text: settings.randomLine,
             displayDuration: settings.displayDurationSeconds
         )
     }

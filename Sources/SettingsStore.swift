@@ -38,17 +38,23 @@ final class SettingsStore: ObservableObject {
     private init() {
         // Register defaults
         defaults.register(defaults: [
-            Keys.reminderText: "Enjoy and appreciate being alive",
+            Keys.reminderText: "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now\nEnjoy & appreciate sensuously",
             Keys.minIntervalMinutes: 1.0,
             Keys.maxIntervalMinutes: 5.0,
             Keys.displayDurationSeconds: 4.0,
             Keys.isEnabled: true,
         ])
 
-        self.reminderText = defaults.string(forKey: Keys.reminderText) ?? "Enjoy and appreciate being alive"
+        self.reminderText = defaults.string(forKey: Keys.reminderText) ?? "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now\nEnjoy & appreciate sensuously"
         self.minIntervalMinutes = defaults.double(forKey: Keys.minIntervalMinutes)
         self.maxIntervalMinutes = defaults.double(forKey: Keys.maxIntervalMinutes)
         self.displayDurationSeconds = defaults.double(forKey: Keys.displayDurationSeconds)
         self.isEnabled = defaults.bool(forKey: Keys.isEnabled)
+    }
+
+    /// Returns a random line from reminderText. If only one line, returns it directly.
+    var randomLine: String {
+        let lines = reminderText.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        return lines.randomElement() ?? reminderText
     }
 }

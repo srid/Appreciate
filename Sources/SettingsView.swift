@@ -13,7 +13,7 @@ struct SettingsView: View {
 
             // Reminder text
             VStack(alignment: .leading, spacing: 6) {
-                Text("Reminder Text")
+                Text("Reminder Text (one per line)")
                     .font(.headline)
                 TextEditor(text: $settings.reminderText)
                     .font(.body)
