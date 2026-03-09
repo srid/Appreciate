@@ -46,7 +46,7 @@ Requires Xcode Command Line Tools (`xcode-select --install`).
 
 ## Releasing
 
-Releases are automated via [release-please](https://github.com/googleapis/release-please). Just push commits to `main` using [Conventional Commits](https://www.conventionalcommits.org/) format:
+Releases are automated via [release-please](https://github.com/googleapis/release-please). Just push commits to `master` using [Conventional Commits](https://www.conventionalcommits.org/) format:
 
 ```
 feat: add custom font picker
