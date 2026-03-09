@@ -238,8 +238,9 @@ class OverlayViewFactory(private val context: Context) {
 
         enterSet.start()
 
-        // Schedule exit
-        val holdMs = (Math.max(0f, displayDuration - 2f) * 1000).toLong()
+        // Schedule exit: displayDuration is how long text stays fully visible,
+        // entrance (600ms) and exit (1500ms) animations are on top of that.
+        val holdMs = (displayDuration * 1000).toLong()
         handler.postDelayed({
             val exitAnims = mutableListOf<Animator>()
             exitAnims.add(ObjectAnimator.ofFloat(view, "alpha", 1f, 0f))

@@ -8,13 +8,15 @@ import android.app.Service
 import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.IBinder
+import android.os.PowerManager
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
 
 /**
  * Foreground service that manages the overlay window and timer.
- * Runs persistently to ensure reminders fire reliably.
+ * Uses a WakeLock while the overlay is visible to prevent the CPU from
+ * sleeping mid-animation (which causes the "instant flash on unlock" bug).
  */
 class OverlayService : Service() {
 
@@ -32,6 +34,7 @@ class OverlayService : Service() {
     private var currentOverlay: View? = null
     private lateinit var timerManager: TimerManager
     private lateinit var overlayViewFactory: OverlayViewFactory
+    private var overlayWakeLock: PowerManager.WakeLock? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -45,8 +48,12 @@ class OverlayService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 startForegroundWithNotification()
-                timerManager.scheduleNext()
-                Log.d(TAG, "Service started, timer scheduled")
+                try {
+                    timerManager.scheduleNext()
+                    Log.d(TAG, "Service started, alarm clock scheduled")
+                } catch (e: SecurityException) {
+                    Log.e(TAG, "Cannot schedule alarm — permission not yet granted: ${e.message}")
+                }
             }
             ACTION_STOP -> {
                 timerManager.cancel()
@@ -55,6 +62,7 @@ class OverlayService : Service() {
                 Log.d(TAG, "Service stopped")
             }
             TimerManager.ACTION_SHOW_OVERLAY -> {
+                Log.d(TAG, "Alarm fired — showing overlay")
                 showOverlay()
                 timerManager.scheduleNext()
             }
@@ -104,7 +112,20 @@ class OverlayService : Service() {
         val text = settings.randomLine
         val duration = settings.displayDurationSeconds
 
-        Log.d(TAG, "Showing overlay: \"$text\"")
+        Log.d(TAG, "Showing overlay: \"$text\" for ${duration}s")
+
+        // Acquire a wake lock for the entire overlay duration + animations
+        // This prevents the CPU from sleeping, which would cause the dismiss
+        // timer to be deferred and fire instantly on unlock (the "flash" bug).
+        val pm = getSystemService(POWER_SERVICE) as PowerManager
+        val totalMs = ((duration + 3) * 1000).toLong() // duration + entrance + exit + margin
+        overlayWakeLock = pm.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "Appreciate:OverlayWakeLock"
+        ).apply {
+            acquire(totalMs)
+        }
+        Log.d(TAG, "WakeLock acquired for ${totalMs}ms")
 
         val overlayView = overlayViewFactory.createOverlayView(text, duration) {
             dismissOverlay()
@@ -126,6 +147,7 @@ class OverlayService : Service() {
             currentOverlay = overlayView
         } catch (e: Exception) {
             Log.e(TAG, "Failed to add overlay: ${e.message}")
+            releaseWakeLock()
         }
     }
 
@@ -138,6 +160,17 @@ class OverlayService : Service() {
             }
             currentOverlay = null
         }
+        releaseWakeLock()
+    }
+
+    private fun releaseWakeLock() {
+        overlayWakeLock?.let {
+            if (it.isHeld) {
+                it.release()
+                Log.d(TAG, "WakeLock released")
+            }
+        }
+        overlayWakeLock = null
     }
 
     override fun onDestroy() {

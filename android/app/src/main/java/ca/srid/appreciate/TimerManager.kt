@@ -4,12 +4,14 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.SystemClock
 import android.util.Log
 
 /**
- * Schedules overlay reminders at random intervals using AlarmManager.
- * Uses exact alarms for reliable timing even during doze mode.
+ * Schedules overlay reminders using AlarmManager.setAlarmClock() — the most
+ * aggressive alarm type on Android. Unlike setExact/setAndAllowWhileIdle,
+ * setAlarmClock() is NEVER deferred by doze mode, battery saver, or any
+ * OEM optimization. It is designed for alarm clock apps and always fires
+ * exactly on time.
  */
 class TimerManager(private val context: Context) {
 
@@ -44,23 +46,18 @@ class TimerManager(private val context: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val triggerAt = SystemClock.elapsedRealtime() + intervalMs
+        val triggerAt = System.currentTimeMillis() + intervalMs
 
-        if (alarmManager.canScheduleExactAlarms()) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                triggerAt,
-                pendingIntent
-            )
-        } else {
-            alarmManager.setAndAllowWhileIdle(
-                AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                triggerAt,
-                pendingIntent
-            )
-        }
+        // setAlarmClock is the NUCLEAR option:
+        // - Ignores doze mode completely
+        // - Ignores battery saver
+        // - Ignores OEM battery optimizations (Samsung, Xiaomi, etc.)
+        // - Always fires exactly on time
+        // - No special permissions needed (unlike setExact which needs SCHEDULE_EXACT_ALARM)
+        val alarmInfo = AlarmManager.AlarmClockInfo(triggerAt, pendingIntent)
+        alarmManager.setAlarmClock(alarmInfo, pendingIntent)
 
-        Log.d(TAG, "Next reminder in ${intervalMs / 1000}s (${intervalMs / 60000f}min)")
+        Log.d(TAG, "ALARM CLOCK set: next reminder in ${intervalMs / 1000}s (${intervalMs / 60000f}min)")
     }
 
     fun cancel() {

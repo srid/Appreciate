@@ -1,6 +1,8 @@
 package ca.srid.appreciate
 
 import android.Manifest
+import android.app.AlarmManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -53,6 +55,7 @@ class MainActivity : AppCompatActivity() {
         loadSettings()
         setupListeners()
         checkOverlayPermission()
+        checkAlarmPermission()
         requestNotificationPermission()
     }
 
@@ -171,6 +174,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.grantPermissionButton).setOnClickListener {
             requestOverlayPermission()
         }
+
+        findViewById<Button>(R.id.grantAlarmButton).setOnClickListener {
+            requestAlarmPermission()
+        }
     }
 
     private fun updateMinLabel() {
@@ -192,16 +199,34 @@ class MainActivity : AppCompatActivity() {
         if (Settings.canDrawOverlays(this)) {
             btn.text = "✅ Overlay Permission Granted"
             btn.isEnabled = false
-            // Auto-start service if enabled
-            if (settings.isEnabled) {
-                val intent = Intent(this, OverlayService::class.java).apply {
-                    action = OverlayService.ACTION_START
-                }
-                startForegroundService(intent)
-            }
         } else {
             btn.text = "⚠️ Grant Overlay Permission"
             btn.isEnabled = true
+        }
+        tryStartService()
+    }
+
+    private fun checkAlarmPermission() {
+        val btn = findViewById<Button>(R.id.grantAlarmButton)
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (alarmManager.canScheduleExactAlarms()) {
+            btn.text = "✅ Alarm Permission Granted"
+            btn.isEnabled = false
+        } else {
+            btn.text = "⚠️ Grant Alarm Permission"
+            btn.isEnabled = true
+        }
+        tryStartService()
+    }
+
+    /** Only start the service when ALL required permissions are granted. */
+    private fun tryStartService() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (Settings.canDrawOverlays(this) && alarmManager.canScheduleExactAlarms() && settings.isEnabled) {
+            val intent = Intent(this, OverlayService::class.java).apply {
+                action = OverlayService.ACTION_START
+            }
+            startForegroundService(intent)
         }
     }
 
@@ -213,8 +238,16 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    private fun requestAlarmPermission() {
+        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+            data = Uri.parse("package:$packageName")
+        }
+        startActivity(intent)
+    }
+
     override fun onResume() {
         super.onResume()
         checkOverlayPermission()
+        checkAlarmPermission()
     }
 }
