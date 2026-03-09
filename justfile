@@ -15,3 +15,7 @@ build-macos:
 # Show a reminder immediately on the connected phone
 show:
     adb shell am startservice -a ca.srid.appreciate.ACTION_SHOW_NOW ca.srid.appreciate/.OverlayService
+
+# Build Windows app
+build-windows:
+    cd windows && dotnet build

@@ -67,8 +67,30 @@ jobs:
           name: android-apk
           path: "Appreciate-Android-*.apk"
 
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build Windows EXE
+        run: dotnet publish windows/Appreciate.csproj -c Release -r win-x64 --self-contained -o publish
+
+      - name: Rename EXE
+        run: |
+          copy publish\Appreciate.exe "Appreciate-Windows-${{ inputs.version }}.exe"
+
+      - name: Upload Windows EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: "Appreciate-Windows-*.exe"
+
   release:
-    needs: [build-macos, build-android]
+    needs: [build-macos, build-android, build-windows]
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
@@ -82,3 +104,4 @@ jobs:
           files: |
             macos-dmg/Appreciate-macOS-*.dmg
             android-apk/Appreciate-Android-*.apk
+            windows-exe/Appreciate-Windows-*.exe
