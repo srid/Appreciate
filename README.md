@@ -8,15 +8,15 @@ A tiny app that periodically flashes a reminder across your screen — **"Enjoy 
 
 The text is rendered as a transparent overlay directly on your screen (not a system notification), then fades away. Interval, position, font size, color, and style are all **randomized** to prevent habituation.
 
-Available for **macOS** and **Android**.
+Available for **macOS**, **Android**, and **Windows**.
 
 ## Features
 
 - 🖥️ **Screen overlay** — reminder text appears directly on your desktop, then fades away
 - 🎲 **Anti-habituation** — everything is randomized (timing, position, color, font, animation style, background) so you never tune it out
-- 🖥️🖥️ **Multi-monitor** — appears on all screens simultaneously (macOS)
+- 🖥️🖥️ **Multi-monitor** — appears on all screens simultaneously (macOS, Windows)
 - ⚙️ **Customizable** — multiple reminder lines (random pick), adjustable intervals and duration
-- 🎯 **Background app** — menubar-only on macOS, foreground service on Android
+- 🎯 **Background app** — menubar on macOS, foreground service on Android, system tray on Windows
 
 ---
 
@@ -70,6 +70,31 @@ Enable **USB debugging** on your phone first: Settings → About phone → tap B
 
 ---
 
+## Windows
+
+### Install from EXE
+
+1. Download the latest `.exe` from [Releases](../../releases)
+2. Run it — the ✨ icon appears in your system tray
+3. No special permissions needed
+
+### Build from source
+
+Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+```bash
+cd windows
+dotnet run
+```
+
+To publish a single-file executable:
+```bash
+cd windows
+dotnet publish -c Release -r win-x64 --self-contained
+```
+
+---
+
 ## Usage
 
 | Setting | Description |
@@ -86,7 +111,7 @@ Enable **USB debugging** on your phone first: Settings → About phone → tap B
 1. Go to [Actions → Release](../../actions/workflows/release.yml)
 2. Click **Run workflow**
 3. Enter a version tag (e.g. `v1.1.0`)
-4. The workflow builds both a macOS DMG and Android APK, attaches to the Release
+4. The workflow builds macOS DMG, Android APK, and Windows EXE, and attaches all to the Release
 
 ## License
 

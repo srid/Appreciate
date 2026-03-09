@@ -1,0 +1,30 @@
+<Window x:Class="Appreciate.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        ResizeMode="NoResize">
+    <Grid x:Name="RootGrid">
+        <Border x:Name="PillBorder"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                CornerRadius="20"
+                Padding="32,16"
+                Visibility="Collapsed">
+            <TextBlock x:Name="ReminderText"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       TextAlignment="Center"
+                       FontSize="48" />
+        </Border>
+        <TextBlock x:Name="ReminderTextNoPill"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   TextAlignment="Center"
+                   FontSize="48" />
+    </Grid>
+</Window>
