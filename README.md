@@ -13,6 +13,7 @@ The text is rendered as a transparent overlay directly on your desktop (not a sy
 - 🎯 **Menubar-only** — no Dock icon, stays out of your way
 - 🖥️ **Screen overlay** — text is painted on screen above all windows, click-through
 - 🎲 **Anti-habituation** — randomized interval, position, font size, weight, design, color, and rotation
+- 📝 **Multiple reminders** — add one per line, a random one is picked each time
 - ⚙️ **Configurable** — edit the reminder text, interval range, and display duration in Settings
 - 📦 **Zero dependencies** — pure Swift, single `build.sh`
 
