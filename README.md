@@ -22,11 +22,11 @@ The text is rendered as a transparent overlay directly on your desktop (not a sy
 
 1. Download the latest `.dmg` from [Releases](../../releases)
 2. Open the DMG and drag **Appreciate** to **Applications**
-3. Since the app is **unsigned**, macOS will block it on first launch:
-   - Open **System Settings → Privacy & Security**
-   - Scroll down to the security section — you'll see *"Appreciate" was blocked*
-   - Click **Open Anyway**, then confirm
-4. The ✨ sparkle icon appears in your menubar — you're good to go
+3. Before opening, **remove the quarantine flag** (required for unsigned apps):
+   ```bash
+   xattr -cr /Applications/Appreciate.app
+   ```
+4. Open **Appreciate** — the ✨ sparkle icon appears in your menubar
 
 ### Build from source
 
