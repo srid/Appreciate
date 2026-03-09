@@ -93,6 +93,47 @@ jobs:
     needs: [build-macos, build-android, build-windows]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog from commits
+        id: changelog
+        run: |
+          # Find the previous tag, or use the initial commit if none exists
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          echo "Previous ref: $PREV_TAG"
+
+          {
+            echo 'CHANGELOG<<EOF'
+
+            # Features
+            FEATS=$(git log "$PREV_TAG"..HEAD --pretty=format:'- %s' --grep='^feat' | sed 's/^- feat: /- /; s/^- feat(/- (/') || true
+            if [ -n "$FEATS" ]; then
+              echo "### ✨ Features"
+              echo "$FEATS"
+              echo ""
+            fi
+
+            # Fixes
+            FIXES=$(git log "$PREV_TAG"..HEAD --pretty=format:'- %s' --grep='^fix' | sed 's/^- fix: /- /; s/^- fix(/- (/') || true
+            if [ -n "$FIXES" ]; then
+              echo "### 🐛 Fixes"
+              echo "$FIXES"
+              echo ""
+            fi
+
+            # Other (docs, chore, refactor, style)
+            OTHERS=$(git log "$PREV_TAG"..HEAD --pretty=format:'- %s' --grep='^docs\|^chore\|^refactor\|^style' | sed 's/^- \(docs\|chore\|refactor\|style\): /- /' || true
+            if [ -n "$OTHERS" ]; then
+              echo "### 📝 Other"
+              echo "$OTHERS"
+              echo ""
+            fi
+
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Download all artifacts
         uses: actions/download-artifact@v4
 
@@ -100,7 +141,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version }}
-          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
           files: |
             macos-dmg/Appreciate-macOS-*.dmg
             android-apk/Appreciate-Android-*.apk
