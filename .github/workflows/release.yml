@@ -11,31 +11,74 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  build-macos:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Build app
+      - name: Build macOS app
         run: |
-          chmod +x build.sh
-          ./build.sh
+          chmod +x macos/build.sh
+          cd macos && ./build.sh
 
       - name: Create DMG
         run: |
           mkdir -p dmg-contents
-          cp -R build/Appreciate.app dmg-contents/
+          cp -R macos/build/Appreciate.app dmg-contents/
           ln -s /Applications dmg-contents/Applications
           hdiutil create -volname "Appreciate" \
             -srcfolder dmg-contents \
             -ov -format UDZO \
-            "Appreciate-${{ inputs.version }}.dmg"
+            "Appreciate-macOS-${{ inputs.version }}.dmg"
+
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: "Appreciate-macOS-*.dmg"
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Rename APK
+        run: |
+          cp android/app/build/outputs/apk/debug/app-debug.apk \
+            "Appreciate-Android-${{ inputs.version }}.apk"
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: "Appreciate-Android-*.apk"
+
+  release:
+    needs: [build-macos, build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version }}
           generate_release_notes: true
-          files: "Appreciate-*.dmg"
+          files: |
+            macos-dmg/Appreciate-macOS-*.dmg
+            android-apk/Appreciate-Android-*.apk
