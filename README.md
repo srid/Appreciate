@@ -46,15 +46,11 @@ Requires Xcode Command Line Tools (`xcode-select --install`).
 
 ## Releasing
 
-Releases are automated via [release-please](https://github.com/googleapis/release-please). Just push commits to `master` using [Conventional Commits](https://www.conventionalcommits.org/) format:
 
-```
-feat: add custom font picker
-fix: overlay not appearing on secondary display
-```
-
-release-please will automatically open a Release PR. When you merge it, a GitHub Release is created and the DMG is built and attached.
-
+1. Go to [Actions → Release](../../actions/workflows/release.yml)
+2. Click **Run workflow**
+3. Enter a version tag (e.g. `v1.0.0`)
+4. The workflow builds a DMG and creates a GitHub Release with auto-generated release notes from commits
 
 ## License
 
