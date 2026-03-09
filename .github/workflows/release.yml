@@ -88,9 +88,30 @@ jobs:
         with:
           name: windows-exe
           path: "Appreciate-Windows-*.exe"
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Build Linux app
+        run: nix build .#linux
+
+      - name: Package Linux app
+        run: |
+          mkdir -p Appreciate-Linux
+          cp -rL result/bin/* Appreciate-Linux/
+          cp linux/appreciate.desktop Appreciate-Linux/
+          tar czf "Appreciate-Linux-${{ inputs.version }}.tar.gz" Appreciate-Linux/
+
+      - name: Upload Linux archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-tar
+          path: "Appreciate-Linux-*.tar.gz"
 
   release:
-    needs: [build-macos, build-android, build-windows]
+    needs: [build-macos, build-android, build-windows, build-linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -146,3 +167,4 @@ jobs:
             macos-dmg/Appreciate-macOS-*.dmg
             android-apk/Appreciate-Android-*.apk
             windows-exe/Appreciate-Windows-*.exe
+            linux-tar/Appreciate-Linux-*.tar.gz

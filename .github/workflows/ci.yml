@@ -40,3 +40,11 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Build Windows app
         run: dotnet build windows/Appreciate.csproj
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Build Linux app
+        run: nix build .#linux

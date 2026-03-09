@@ -10,7 +10,7 @@ A tiny app that periodically flashes a reminder across your screen — **"Enjoy 
 
 The text is rendered as a transparent overlay directly on your screen (not a system notification), then fades away. Interval, position, font size, color, and style are all **randomized** to prevent habituation.
 
-Available for **macOS**, **Android**, and **Windows**.
+Available for **macOS**, **Android**, **Windows**, and **Linux**.
 
 ## Features
 
@@ -94,6 +94,27 @@ To publish a single-file executable:
 cd windows
 dotnet publish -c Release -r win-x64 --self-contained
 ```
+
+---
+
+## Linux
+
+### Install via Nix
+
+```bash
+nix run github:srid/Appreciate
+```
+
+### Install from tarball
+
+1. Download the latest `.tar.gz` from [Releases](../../releases)
+2. Extract and run:
+   ```bash
+   tar xzf Appreciate-Linux-*.tar.gz
+   cd Appreciate-Linux
+   ./run.sh
+   ```
+   Requires Python 3 and GTK4 (`python3-gi`, `gir1.2-gtk-4.0`).
 
 ---
 
