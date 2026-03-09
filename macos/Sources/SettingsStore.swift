@@ -45,7 +45,7 @@ final class SettingsStore: ObservableObject {
     }
 
     private init() {
-        // Register defaults
+        // SYNC: Default values must match android/.../SettingsStore.kt defaults
         defaults.register(defaults: [
             Keys.reminderText: "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now\nEnjoy & appreciate sensuously",
             Keys.minIntervalMinutes: 1.0,

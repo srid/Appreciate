@@ -60,6 +60,7 @@ final class OverlayManager {
 
 // MARK: - Animation Style
 
+// SYNC: Animation kinds must match android/.../OverlayViewFactory.kt AnimationKind
 enum AnimationKind: CaseIterable {
     case fade
     case slideFromTop
@@ -110,6 +111,7 @@ struct OverlayStyle {
         )
     }
 
+    // SYNC: Color palette must match android/.../OverlayViewFactory.kt vibrantColors
     private static let vibrantColors: [Color] = [
         Color(hue: 0.05, saturation: 0.85, brightness: 0.95),
         Color(hue: 0.08, saturation: 0.90, brightness: 1.0),
