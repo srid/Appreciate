@@ -11,6 +11,7 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -169,13 +170,17 @@ class OverlayViewFactory(private val context: Context) {
     ) {
         val handler = Handler(Looper.getMainLooper())
 
+        Log.d("OverlayViewFactory", "animateIn: kind=${style.animationKind} duration=${displayDuration}s")
+
         // Set initial state
         view.alpha = 0f
+        val initialTransX = view.translationX
+        val initialTransY = view.translationY
         when (style.animationKind) {
-            AnimationKind.SLIDE_TOP -> view.translationY -= 400f
-            AnimationKind.SLIDE_BOTTOM -> view.translationY += 400f
-            AnimationKind.SLIDE_LEFT -> view.translationX -= 600f
-            AnimationKind.SLIDE_RIGHT -> view.translationX += 600f
+            AnimationKind.SLIDE_TOP -> view.translationY = initialTransY - 400f
+            AnimationKind.SLIDE_BOTTOM -> view.translationY = initialTransY + 400f
+            AnimationKind.SLIDE_LEFT -> view.translationX = initialTransX - 600f
+            AnimationKind.SLIDE_RIGHT -> view.translationX = initialTransX + 600f
             AnimationKind.SCALE_UP -> {
                 view.scaleX = 0.3f
                 view.scaleY = 0.3f
@@ -183,83 +188,62 @@ class OverlayViewFactory(private val context: Context) {
             AnimationKind.BLUR_FADE, AnimationKind.FADE -> { /* just opacity */ }
         }
 
-        // Entrance animation
-        val enterAnims = mutableListOf<Animator>()
-        enterAnims.add(ObjectAnimator.ofFloat(view, "alpha", 0f, 1f))
+        // Entrance animation using ViewPropertyAnimator (ignores animator_duration_scale)
+        val enter = view.animate()
+            .alpha(1f)
+            .setDuration(600)
 
         when (style.animationKind) {
-            AnimationKind.SLIDE_TOP, AnimationKind.SLIDE_BOTTOM -> {
-                val target = view.translationY + if (style.animationKind == AnimationKind.SLIDE_TOP) 400f else -400f
-                enterAnims.add(ObjectAnimator.ofFloat(view, "translationY", view.translationY, target))
-            }
-            AnimationKind.SLIDE_LEFT, AnimationKind.SLIDE_RIGHT -> {
-                val target = view.translationX + if (style.animationKind == AnimationKind.SLIDE_LEFT) 600f else -600f
-                enterAnims.add(ObjectAnimator.ofFloat(view, "translationX", view.translationX, target))
-            }
-            AnimationKind.SCALE_UP -> {
-                enterAnims.add(ObjectAnimator.ofFloat(view, "scaleX", 0.3f, 1f))
-                enterAnims.add(ObjectAnimator.ofFloat(view, "scaleY", 0.3f, 1f))
-            }
+            AnimationKind.SLIDE_TOP, AnimationKind.SLIDE_BOTTOM -> enter.translationY(initialTransY)
+            AnimationKind.SLIDE_LEFT, AnimationKind.SLIDE_RIGHT -> enter.translationX(initialTransX)
+            AnimationKind.SCALE_UP -> enter.scaleX(1f).scaleY(1f)
             else -> {}
         }
 
-        val enterSet = AnimatorSet().apply {
-            playTogether(enterAnims)
-            duration = 600
-            interpolator = if (style.animationKind == AnimationKind.SCALE_UP)
-                OvershootInterpolator(1.2f)
-            else
-                DecelerateInterpolator()
-        }
+        enter.start()
 
-        // Scale breathing during hold
-        if (style.scaleBreathing) {
-            enterSet.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationEnd(animation: Animator) {
-                    val breatheX = ObjectAnimator.ofFloat(view, "scaleX", 1f, style.targetScale).apply {
-                        repeatCount = ObjectAnimator.INFINITE
-                        repeatMode = ObjectAnimator.REVERSE
-                        duration = 1500
-                        interpolator = AccelerateDecelerateInterpolator()
-                    }
-                    val breatheY = ObjectAnimator.ofFloat(view, "scaleY", 1f, style.targetScale).apply {
-                        repeatCount = ObjectAnimator.INFINITE
-                        repeatMode = ObjectAnimator.REVERSE
-                        duration = 1500
-                        interpolator = AccelerateDecelerateInterpolator()
-                    }
-                    AnimatorSet().apply {
-                        playTogether(breatheX, breatheY)
-                        start()
-                    }
-                }
-            })
-        }
-
-        enterSet.start()
-
-        // Schedule exit: displayDuration is how long text stays fully visible,
-        // entrance (600ms) and exit (1500ms) animations are on top of that.
+        // Schedule exit using Handler (not affected by animation scale)
         val holdMs = (displayDuration * 1000).toLong()
+        val exitDelayMs = 600 + holdMs
+        Log.d("OverlayViewFactory", "Exit scheduled in ${exitDelayMs}ms (entrance=600 + hold=${holdMs})")
+
         handler.postDelayed({
-            val exitAnims = mutableListOf<Animator>()
-            exitAnims.add(ObjectAnimator.ofFloat(view, "alpha", 1f, 0f))
+            Log.d("OverlayViewFactory", "EXIT animation starting now")
+
+            val exit = view.animate()
+                .alpha(0f)
+                .setDuration(1500)
 
             if (style.animationKind == AnimationKind.SCALE_UP) {
-                exitAnims.add(ObjectAnimator.ofFloat(view, "scaleX", view.scaleX, 1.5f))
-                exitAnims.add(ObjectAnimator.ofFloat(view, "scaleY", view.scaleY, 1.5f))
+                exit.scaleX(1.5f).scaleY(1.5f)
             }
 
-            AnimatorSet().apply {
-                playTogether(exitAnims)
-                duration = 1500
-                addListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationEnd(animation: Animator) {
-                        onDismiss()
-                    }
-                })
-                start()
+            exit.withEndAction {
+                Log.d("OverlayViewFactory", "EXIT complete — calling onDismiss")
+                onDismiss()
             }
-        }, 600 + holdMs)
+
+            exit.start()
+        }, exitDelayMs)
+
+        // Scale breathing using ViewPropertyAnimator loop
+        if (style.scaleBreathing) {
+            fun breatheLoop() {
+                view.animate()
+                    .scaleX(style.targetScale)
+                    .scaleY(style.targetScale)
+                    .setDuration(1500)
+                    .withEndAction {
+                        view.animate()
+                            .scaleX(1f)
+                            .scaleY(1f)
+                            .setDuration(1500)
+                            .withEndAction { breatheLoop() }
+                            .start()
+                    }
+                    .start()
+            }
+            handler.postDelayed({ breatheLoop() }, 600)
+        }
     }
 }
