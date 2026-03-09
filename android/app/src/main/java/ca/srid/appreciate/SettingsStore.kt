@@ -21,11 +21,11 @@ class SettingsStore(context: Context) {
 
         // SYNC: Default values must match macos/Sources/SettingsStore.swift defaults
         private const val DEFAULT_REMINDER_TEXT =
-            "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now\nEnjoy & appreciate sensuously"
+            "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now"
         // Android-specific defaults: shorter intervals since phone is personal
-        private const val DEFAULT_MIN_INTERVAL = 0.5f
-        private const val DEFAULT_MAX_INTERVAL = 1f
-        private const val DEFAULT_DISPLAY_DURATION = 4f
+        private const val DEFAULT_MIN_INTERVAL = 0.1f
+        private const val DEFAULT_MAX_INTERVAL = 1.5f
+        private const val DEFAULT_DISPLAY_DURATION = 6f
         private const val DEFAULT_ENABLED = true
         private const val DEFAULT_LAUNCH_AT_BOOT = true
     }

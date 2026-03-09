@@ -17,10 +17,10 @@ namespace Appreciate
         public static SettingsStore Instance => _instance ??= Load();
 
         // SYNC: Default values must match macos/Sources/SettingsStore.swift and android/.../SettingsStore.kt
-        public string ReminderText { get; set; } = "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now\nEnjoy & appreciate sensuously";
-        public float MinIntervalMinutes { get; set; } = 1f;
-        public float MaxIntervalMinutes { get; set; } = 5f;
-        public float DisplayDurationSeconds { get; set; } = 4f;
+        public string ReminderText { get; set; } = "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now";
+        public float MinIntervalMinutes { get; set; } = 0.1f;
+        public float MaxIntervalMinutes { get; set; } = 1.5f;
+        public float DisplayDurationSeconds { get; set; } = 6f;
         public bool IsEnabled { get; set; } = true;
         public bool LaunchAtLogin { get; set; } = true;
 

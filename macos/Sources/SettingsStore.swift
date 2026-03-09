@@ -47,15 +47,15 @@ final class SettingsStore: ObservableObject {
     private init() {
         // SYNC: Default values must match android/.../SettingsStore.kt defaults
         defaults.register(defaults: [
-            Keys.reminderText: "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now\nEnjoy & appreciate sensuously",
-            Keys.minIntervalMinutes: 1.0,
-            Keys.maxIntervalMinutes: 5.0,
-            Keys.displayDurationSeconds: 4.0,
+            Keys.reminderText: "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
+            Keys.minIntervalMinutes: 0.1,
+            Keys.maxIntervalMinutes: 1.5,
+            Keys.displayDurationSeconds: 6.0,
             Keys.isEnabled: true,
             Keys.launchAtLogin: true,
         ])
 
-        self.reminderText = defaults.string(forKey: Keys.reminderText) ?? "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now\nEnjoy & appreciate sensuously"
+        self.reminderText = defaults.string(forKey: Keys.reminderText) ?? "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now"
         self.minIntervalMinutes = defaults.double(forKey: Keys.minIntervalMinutes)
         self.maxIntervalMinutes = defaults.double(forKey: Keys.maxIntervalMinutes)
         self.displayDurationSeconds = defaults.double(forKey: Keys.displayDurationSeconds)
