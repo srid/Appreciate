@@ -33,6 +33,7 @@ swiftc \
     -sdk "$(xcrun --show-sdk-path)" \
     -framework Cocoa \
     -framework SwiftUI \
+    -framework ServiceManagement \
     "$SOURCES_DIR/main.swift" \
     "$SOURCES_DIR/SettingsStore.swift" \
     "$SOURCES_DIR/OverlayContentView.swift" \

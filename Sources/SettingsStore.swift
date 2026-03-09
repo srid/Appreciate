@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import ServiceManagement
 
 /// Persists user preferences via UserDefaults.
 final class SettingsStore: ObservableObject {
@@ -13,6 +14,7 @@ final class SettingsStore: ObservableObject {
         static let maxIntervalMinutes = "maxIntervalMinutes"
         static let displayDurationSeconds = "displayDurationSeconds"
         static let isEnabled = "isEnabled"
+        static let launchAtLogin = "launchAtLogin"
     }
 
     @Published var reminderText: String {
@@ -35,6 +37,13 @@ final class SettingsStore: ObservableObject {
         didSet { defaults.set(isEnabled, forKey: Keys.isEnabled) }
     }
 
+    @Published var launchAtLogin: Bool {
+        didSet {
+            defaults.set(launchAtLogin, forKey: Keys.launchAtLogin)
+            updateLoginItem()
+        }
+    }
+
     private init() {
         // Register defaults
         defaults.register(defaults: [
@@ -43,6 +52,7 @@ final class SettingsStore: ObservableObject {
             Keys.maxIntervalMinutes: 5.0,
             Keys.displayDurationSeconds: 4.0,
             Keys.isEnabled: true,
+            Keys.launchAtLogin: true,
         ])
 
         self.reminderText = defaults.string(forKey: Keys.reminderText) ?? "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now\nEnjoy & appreciate sensuously"
@@ -50,6 +60,21 @@ final class SettingsStore: ObservableObject {
         self.maxIntervalMinutes = defaults.double(forKey: Keys.maxIntervalMinutes)
         self.displayDurationSeconds = defaults.double(forKey: Keys.displayDurationSeconds)
         self.isEnabled = defaults.bool(forKey: Keys.isEnabled)
+        self.launchAtLogin = defaults.bool(forKey: Keys.launchAtLogin)
+        updateLoginItem()
+    }
+
+    private func updateLoginItem() {
+        let service = SMAppService.mainApp
+        do {
+            if launchAtLogin {
+                try service.register()
+            } else {
+                try service.unregister()
+            }
+        } catch {
+            NSLog("[Appreciate] Login item update failed: %@", error.localizedDescription)
+        }
     }
 
     /// Returns a random line from reminderText. If only one line, returns it directly.

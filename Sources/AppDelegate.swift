@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = SettingsStore.shared
     private var settingsWindow: NSWindow?
     private var enabledMenuItem: NSMenuItem!
+    private var launchAtLoginMenuItem: NSMenuItem!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Activate as accessory (no dock icon)
@@ -43,6 +44,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         enabledMenuItem.target = self
         enabledMenuItem.state = settings.isEnabled ? .on : .off
         menu.addItem(enabledMenuItem)
+
+        launchAtLoginMenuItem = NSMenuItem(title: "Launch at Login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+        launchAtLoginMenuItem.target = self
+        launchAtLoginMenuItem.state = settings.launchAtLogin ? .on : .off
+        menu.addItem(launchAtLoginMenuItem)
 
         let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settingsItem.target = self
@@ -88,6 +94,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             timerManager.stop()
         }
+    }
+
+    @objc private func toggleLaunchAtLogin() {
+        settings.launchAtLogin.toggle()
+        launchAtLoginMenuItem.state = settings.launchAtLogin ? .on : .off
     }
 
     @objc private func openSettings() {

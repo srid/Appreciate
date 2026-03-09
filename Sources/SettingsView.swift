@@ -61,6 +61,11 @@ struct SettingsView: View {
 
             Divider()
 
+            // Launch at Login
+            Toggle("Launch at Login", isOn: $settings.launchAtLogin)
+
+            Divider()
+
             // Show Now button
             HStack {
                 Spacer()
