@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appreciate — Enjoy &amp; appreciate being alive</title>
+    <meta name="description" content="A tiny cross-platform app that periodically flashes a reminder overlay on your screen to enjoy and appreciate being alive.">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+        <img src="icon.png" alt="Appreciate icon" class="hero-icon" width="120" height="120">
+        <h1>Appreciate</h1>
+        <p class="tagline">A prompt to get back to feeling good, each moment again.</p>
+        <p class="subtitle">A tiny app that periodically flashes a reminder overlay on your screen — <em>"Enjoy &amp; appreciate being alive"</em> — with randomized styling so you never tune it out.</p>
+
+        <div class="cta-row">
+            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-primary">Download</a>
+            <a href="https://github.com/srid/Appreciate" class="btn btn-secondary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                Source Code
+            </a>
+        </div>
+    </div>
+
+    <!-- Animated demo overlay -->
+    <div class="demo-screen">
+        <div class="demo-topbar">
+            <div class="demo-dots"><span></span><span></span><span></span></div>
+            <div class="demo-title">Desktop</div>
+        </div>
+        <div class="demo-content">
+            <div class="demo-overlay demo-overlay-1">Enjoy &amp; appreciate simply being alive</div>
+            <div class="demo-overlay demo-overlay-2">Enjoy &amp; appreciate being here now</div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+    <h2>Why Appreciate?</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">🖥️</div>
+            <h3>Screen Overlay</h3>
+            <p>Appears directly on your desktop as transparent text — not a notification you swipe away.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🎲</div>
+            <h3>Anti-Habituation</h3>
+            <p>Timing, position, color, font, animation style are all randomized so you never tune it out.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🖥️🖥️</div>
+            <h3>Multi-Monitor</h3>
+            <p>Appears on all screens simultaneously on macOS and Windows.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>Lightweight</h3>
+            <p>Native on every platform — Swift on macOS, Kotlin on Android, C# on Windows. No Electron.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⚙️</div>
+            <h3>Customizable</h3>
+            <p>Multiple reminder lines, adjustable intervals and duration. Your text, your schedule.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🚀</div>
+            <h3>Launch at Startup</h3>
+            <p>Set it once, forget it. Runs silently in the background from boot.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Platforms -->
+<section class="platforms" id="download">
+    <h2>Available On</h2>
+    <div class="platform-cards">
+        <div class="platform-card">
+            <div class="platform-icon">🍎</div>
+            <h3>macOS</h3>
+            <p>Menubar app. Download the DMG or build from source with Swift.</p>
+            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small">Download DMG</a>
+        </div>
+        <div class="platform-card">
+            <div class="platform-icon">🤖</div>
+            <h3>Android</h3>
+            <p>Foreground service with overlay. Download the APK directly.</p>
+            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small">Download APK</a>
+        </div>
+        <div class="platform-card">
+            <div class="platform-icon">🪟</div>
+            <h3>Windows</h3>
+            <p>System tray app built with WPF/.NET 8. Single executable.</p>
+            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small">Download EXE</a>
+        </div>
+    </div>
+</section>
+
+<!-- Open Source -->
+<section class="oss">
+    <div class="oss-content">
+        <h2>Open Source</h2>
+        <p>Appreciate is free and open source under the MIT license. Contributions welcome.</p>
+        <a href="https://github.com/srid/Appreciate" class="btn btn-secondary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            View on GitHub
+        </a>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <p>Made by <a href="https://srid.ca">Srid</a> · <a href="https://github.com/srid/Appreciate">GitHub</a> · MIT License</p>
+</footer>
+
+</body>
+</html>
