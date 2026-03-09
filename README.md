@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="AppIcon.png" width="128" height="128" alt="Appreciate icon">
+</p>
+
 # Appreciate ✨
 
 A tiny macOS menubar app that periodically flashes a reminder across your screen — **"Enjoy and appreciate being alive"** — to nudge you back into the present moment.
