@@ -243,6 +243,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.grantAlarmButton).setOnClickListener {
             requestAlarmPermission()
         }
+
+        findViewById<Button>(R.id.screensaverSettingsButton).setOnClickListener {
+            openScreensaverSettings()
+        }
     }
 
     private fun refreshPackSpinner() {
@@ -309,6 +313,15 @@ class MainActivity : AppCompatActivity() {
             Uri.parse("package:$packageName")
         )
         startActivity(intent)
+    }
+
+    private fun openScreensaverSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_DREAM_SETTINGS)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Could not open screen saver settings", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun requestAlarmPermission() {

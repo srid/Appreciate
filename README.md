@@ -71,6 +71,14 @@ Enable **USB debugging** on your phone first: Settings → About phone → tap B
 3. Back to app → **Enabled** switch is on by default
 4. Done! Reminders will appear at random intervals
 
+### Always On Display (AOD)
+
+Appreciate registers as an Android Screensaver (Daydream). To show reminders on the Always On Display or when your device is idle:
+
+1. Open Appreciate → tap **"🌙 Open Screen Saver Settings"**
+2. Select **Appreciate** as your screen saver
+3. Reminders will now appear on your lock screen / AOD when idle or charging
+
 ---
 
 ## Windows

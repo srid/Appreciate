@@ -232,7 +232,36 @@
             android:layout_height="wrap_content"
             android:text="✨ Show Now"
             android:textAllCaps="false"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Screensaver / AOD -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Always On Display"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Set Appreciate as your screen saver to show reminders on the Always On Display (AOD) or when your device is idle."
+            android:textColor="#AAAAAA"
+            android:textSize="13sp"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/screensaverSettingsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🌙 Open Screen Saver Settings"
+            android:textAllCaps="false"
+            android:textColor="#000000"
+            android:backgroundTint="#FFB74D"
+            android:textSize="14sp" />
 
     </LinearLayout>
 </ScrollView>
