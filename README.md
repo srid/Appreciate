@@ -8,14 +8,14 @@
 
 A tiny app that periodically flashes customizable reminders across your screen as transparent overlays — nudging you to stay present, feel good, or remember whatever matters to you.
 
-Comes with built-in **Reminder Packs** (Sensory, Actualism Method, Cooking, ...) and lets you create your own. Interval, position, font, color, and style are all **randomized** to prevent habituation.
+Comes with built-in **Reminder Packs** (Sensory, Actualism Method, Richard's Journal, Cooking, ...) and lets you create your own. Interval, position, font, color, and style are all **randomized** to prevent habituation.
 
 Available for **macOS**, **Android**, **Windows**, and **Linux**.
 
 ## Features
 
 - 🖥️ **Screen overlay** — reminder text appears directly on your desktop, then fades away
-- 📦 **Reminder Packs** — built-in packs (Sensory, Actualism Method, Cooking) plus create your own
+- 📦 **Reminder Packs** — built-in packs (Sensory, Actualism Method, Richard's Journal, Cooking) plus create your own
 - ✏️ **Fully editable** — add, delete, and edit packs; each pack has multiple lines (random pick)
 - 🎲 **Anti-habituation** — everything is randomized (timing, position, color, font, animation style)
 - 🖥️🖥️ **Multi-monitor** — appears on all screens simultaneously (macOS, Windows)
