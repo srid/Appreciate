@@ -35,7 +35,7 @@ class AppreciateScreensaver : DreamService() {
 
         isInteractive = false
         isFullscreen = true
-        isScreenBright = false // dim for AOD battery savings
+        isScreenBright = true // full brightness so text is clearly visible
 
         settings = SettingsStore(this)
 
