@@ -35,6 +35,8 @@
             android:layout_height="wrap_content"
             android:text="⚠️ Grant Overlay Permission"
             android:textAllCaps="false"
+            android:textColor="#000000"
+            android:backgroundTint="#FFB74D"
             android:layout_marginBottom="8dp" />
 
         <Button
@@ -43,6 +45,8 @@
             android:layout_height="wrap_content"
             android:text="⚠️ Grant Alarm Permission"
             android:textAllCaps="false"
+            android:textColor="#000000"
+            android:backgroundTint="#FFB74D"
             android:layout_marginBottom="24dp" />
 
         <!-- Reminder text -->
@@ -66,7 +70,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="#1E1E1E" />
+                android:background="#1E1E1E"
+                android:popupBackground="#2D2D2D" />
 
             <Button
                 android:id="@+id/addPackButton"
@@ -75,6 +80,8 @@
                 android:text="+"
                 android:textSize="18sp"
                 android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#333333"
                 android:layout_marginStart="8dp" />
 
             <Button
@@ -84,6 +91,8 @@
                 android:text="−"
                 android:textSize="18sp"
                 android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#333333"
                 android:layout_marginStart="4dp" />
         </LinearLayout>
 

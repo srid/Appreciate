@@ -1,10 +1,30 @@
 <resources>
-    <style name="Theme.Appreciate" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.Appreciate" parent="Theme.MaterialComponents.NoActionBar">
+        <!-- Dark theme colors -->
         <item name="colorPrimary">#FFB74D</item>
         <item name="colorPrimaryVariant">#FF9800</item>
         <item name="colorOnPrimary">#000000</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnSurface">#FFFFFF</item>
         <item name="android:windowBackground">#121212</item>
         <item name="android:statusBarColor">#121212</item>
         <item name="android:navigationBarColor">#121212</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#CCCCCC</item>
+        <!-- Spinner dropdown styling -->
+        <item name="android:spinnerItemStyle">@style/SpinnerItem</item>
+        <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropdownItem</item>
+    </style>
+
+    <style name="SpinnerItem" parent="android:Widget.TextView.SpinnerItem">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="SpinnerDropdownItem" parent="android:Widget.DropDownItem.Spinner">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:background">#2D2D2D</item>
+        <item name="android:padding">12dp</item>
     </style>
 </resources>
