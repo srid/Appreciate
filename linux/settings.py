@@ -1,9 +1,7 @@
 """
 Settings store for Appreciate (Linux).
 Persists user preferences to ~/.config/appreciate/settings.json.
-
-SYNC: Default values must match macos/Sources/SettingsStore.swift,
-      android/.../SettingsStore.kt, and windows/SettingsStore.cs.
+Default packs are loaded from packs.json bundled alongside the .py files.
 """
 
 import json
@@ -11,17 +9,34 @@ import os
 import random
 
 
-# SYNC: Built-in packs must match common/packs.json (updated after final sync)
-DEFAULT_PACKS = {
-    "Actualism Method": "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
-    "Sensory": "Notice the play of light and shadow around you\nListen to the layers of sound in this moment\nBreathe in \u2014 what scents are in the air?\nNotice any lingering taste in your mouth\nFeel the texture of what your hands are touching\nSense the weight of your body in the chair\nNotice the position of your arms without looking\nFeel your feet planted on the ground\nNotice the temperature where skin meets air\nSense the gentle rise and fall of your breathing\nFeel the subtle pull of gravity on your limbs\nNotice where tension sits in your body right now",
-    "Cooking": "Don't forget turkey in the oven",
-}
+def _load_bundled_packs():
+    """Read default packs from packs.json (common/packs.json) bundled with the app."""
+    # Look for packs.json next to this script, then in ../common/
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(script_dir, "packs.json"),
+        os.path.join(script_dir, "..", "common", "packs.json"),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+                packs_raw = data.get("packs", {})
+                default_pack = data.get("default_pack", "")
+                packs = {name: "\n".join(lines) for name, lines in packs_raw.items()}
+                return packs, default_pack
+            except Exception:
+                pass
+    return {}, ""
 
-# SYNC: Default values — keep in sync across all platforms
+
+_BUNDLED_PACKS, _BUNDLED_DEFAULT_PACK = _load_bundled_packs()
+
+# Default values — only non-pack settings are hardcoded here
 DEFAULTS = {
-    "packs": dict(DEFAULT_PACKS),
-    "selected_pack": "Sensory",
+    "packs": dict(_BUNDLED_PACKS),
+    "selected_pack": _BUNDLED_DEFAULT_PACK,
     "min_interval_minutes": 0.1,
     "max_interval_minutes": 1.5,
     "display_duration_seconds": 6.0,
@@ -41,7 +56,7 @@ class SettingsStore:
         self._load()
         # Ensure selected pack exists
         if self.selected_pack not in self.packs:
-            self.selected_pack = sorted(self.packs.keys())[0] if self.packs else "Sensory"
+            self.selected_pack = sorted(self.packs.keys())[0] if self.packs else ""
 
     def _load(self):
         try:

@@ -18,12 +18,24 @@ final class SettingsStore: ObservableObject {
         static let launchAtLogin = "launchAtLogin"
     }
 
-    // SYNC: Built-in packs must match common/packs.json
-    static let defaultPacks: [String: String] = [
-        "Actualism Method": "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
-        "Sensory": "Notice the play of light and shadow around you\nListen to the layers of sound in this moment\nBreathe in — what scents are in the air?\nNotice any lingering taste in your mouth\nFeel the texture of what your hands are touching\nSense the weight of your body in the chair\nNotice the position of your arms without looking\nFeel your feet planted on the ground\nNotice the temperature where skin meets air\nSense the gentle rise and fall of your breathing\nFeel the subtle pull of gravity on your limbs\nNotice where tension sits in your body right now",
-        "Cooking": "Don't forget turkey in the oven",
-    ]
+    /// Reads default packs from the bundled packs.json (common/packs.json).
+    private static func loadBundledPacks() -> (packs: [String: String], defaultPack: String) {
+        guard let url = Bundle.main.url(forResource: "packs", withExtension: "json"),
+              let data = try? Data(contentsOf: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let packsDict = json["packs"] as? [String: [String]] else {
+            return (packs: [:], defaultPack: "")
+        }
+        let defaultPack = json["default_pack"] as? String ?? ""
+        var result: [String: String] = [:]
+        for (name, lines) in packsDict {
+            result[name] = lines.joined(separator: "\n")
+        }
+        return (packs: result, defaultPack: defaultPack)
+    }
+
+    /// The built-in packs loaded from packs.json.
+    static let bundled = loadBundledPacks()
 
     /// User's packs (editable dictionary). Keys = pack names, values = newline-separated reminder text.
     @Published var packs: [String: String] {
@@ -63,9 +75,7 @@ final class SettingsStore: ObservableObject {
     /// The reminder text of the currently selected pack.
     var reminderText: String {
         get { packs[selectedPack] ?? "" }
-        set {
-            packs[selectedPack] = newValue
-        }
+        set { packs[selectedPack] = newValue }
     }
 
     /// Sorted pack names for display.
@@ -74,8 +84,10 @@ final class SettingsStore: ObservableObject {
     }
 
     private init() {
+        let bundled = SettingsStore.bundled
+
         defaults.register(defaults: [
-            Keys.selectedPack: "Sensory",
+            Keys.selectedPack: bundled.defaultPack,
             Keys.minIntervalMinutes: 0.1,
             Keys.maxIntervalMinutes: 1.5,
             Keys.displayDurationSeconds: 6.0,
@@ -83,15 +95,15 @@ final class SettingsStore: ObservableObject {
             Keys.launchAtLogin: true,
         ])
 
-        // Load packs from UserDefaults or use defaults
+        // Load packs from UserDefaults or use bundled defaults
         if let data = defaults.data(forKey: Keys.packs),
            let saved = try? JSONDecoder().decode([String: String].self, from: data) {
             self.packs = saved
         } else {
-            self.packs = SettingsStore.defaultPacks
+            self.packs = bundled.packs
         }
 
-        self.selectedPack = defaults.string(forKey: Keys.selectedPack) ?? "Sensory"
+        self.selectedPack = defaults.string(forKey: Keys.selectedPack) ?? bundled.defaultPack
         self.minIntervalMinutes = defaults.double(forKey: Keys.minIntervalMinutes)
         self.maxIntervalMinutes = defaults.double(forKey: Keys.maxIntervalMinutes)
         self.displayDurationSeconds = defaults.double(forKey: Keys.displayDurationSeconds)
@@ -100,7 +112,7 @@ final class SettingsStore: ObservableObject {
 
         // Ensure selected pack exists
         if packs[selectedPack] == nil {
-            selectedPack = packs.keys.sorted().first ?? "Sensory"
+            selectedPack = packs.keys.sorted().first ?? ""
         }
 
         updateLoginItem()
@@ -125,7 +137,7 @@ final class SettingsStore: ObservableObject {
         guard packs.count > 1, packs[name] != nil else { return false }
         packs.removeValue(forKey: name)
         if selectedPack == name {
-            selectedPack = packs.keys.sorted().first ?? "Sensory"
+            selectedPack = packs.keys.sorted().first ?? ""
         }
         return true
     }

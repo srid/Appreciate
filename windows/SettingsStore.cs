@@ -8,6 +8,7 @@ namespace Appreciate
 {
     /// <summary>
     /// Persists user preferences to %APPDATA%/Appreciate/settings.json.
+    /// Default packs are loaded from common/packs.json bundled alongside the exe.
     /// </summary>
     public class SettingsStore
     {
@@ -18,17 +19,48 @@ namespace Appreciate
         private static SettingsStore? _instance;
         public static SettingsStore Instance => _instance ??= Load();
 
-        // SYNC: Built-in packs must match common/packs.json
-        public static readonly Dictionary<string, string> DefaultPacks = new()
+        /// <summary>Loaded from packs.json at startup.</summary>
+        private static readonly (Dictionary<string, string> Packs, string DefaultPack) Bundled = LoadBundledPacks();
+
+        private static (Dictionary<string, string>, string) LoadBundledPacks()
         {
-            ["Actualism Method"] = "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
-            ["Sensory"] = "Notice the play of light and shadow around you\nListen to the layers of sound in this moment\nBreathe in — what scents are in the air?\nNotice any lingering taste in your mouth\nFeel the texture of what your hands are touching\nSense the weight of your body in the chair\nNotice the position of your arms without looking\nFeel your feet planted on the ground\nNotice the temperature where skin meets air\nSense the gentle rise and fall of your breathing\nFeel the subtle pull of gravity on your limbs\nNotice where tension sits in your body right now",
-            ["Cooking"] = "Don't forget turkey in the oven",
-        };
+            try
+            {
+                // Look for packs.json next to the executable
+                var exeDir = AppDomain.CurrentDomain.BaseDirectory;
+                var path = Path.Combine(exeDir, "packs.json");
+                if (!File.Exists(path))
+                    path = Path.Combine(exeDir, "..", "common", "packs.json");
+                if (!File.Exists(path))
+                    path = Path.Combine(exeDir, "..", "..", "..", "common", "packs.json");
+
+                if (File.Exists(path))
+                {
+                    var json = File.ReadAllText(path);
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+                    var defaultPack = root.TryGetProperty("default_pack", out var dp) ? dp.GetString() ?? "" : "";
+                    var packs = new Dictionary<string, string>();
+                    if (root.TryGetProperty("packs", out var packsEl))
+                    {
+                        foreach (var prop in packsEl.EnumerateObject())
+                        {
+                            var lines = new List<string>();
+                            foreach (var line in prop.Value.EnumerateArray())
+                                lines.Add(line.GetString() ?? "");
+                            packs[prop.Name] = string.Join("\n", lines);
+                        }
+                    }
+                    return (packs, defaultPack);
+                }
+            }
+            catch { }
+            return (new Dictionary<string, string>(), "");
+        }
 
         /// <summary>User's packs (editable dictionary).</summary>
-        public Dictionary<string, string> Packs { get; set; } = new(DefaultPacks);
-        public string SelectedPack { get; set; } = "Sensory";
+        public Dictionary<string, string> Packs { get; set; } = new(Bundled.Packs);
+        public string SelectedPack { get; set; } = Bundled.DefaultPack;
         public float MinIntervalMinutes { get; set; } = 0.1f;
         public float MaxIntervalMinutes { get; set; } = 1.5f;
         public float DisplayDurationSeconds { get; set; } = 6f;
@@ -94,7 +126,7 @@ namespace Appreciate
                     var store = JsonSerializer.Deserialize<SettingsStore>(json) ?? new SettingsStore();
                     // Ensure selected pack exists
                     if (!store.Packs.ContainsKey(store.SelectedPack))
-                        store.SelectedPack = store.Packs.Keys.OrderBy(k => k).FirstOrDefault() ?? "Sensory";
+                        store.SelectedPack = store.Packs.Keys.OrderBy(k => k).FirstOrDefault() ?? "";
                     return store;
                 }
             }

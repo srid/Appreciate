@@ -46,6 +46,7 @@
               mkdir -p $out/bin $out/share/appreciate $out/share/applications
               cp *.py $out/share/appreciate/
               cp *.png $out/share/appreciate/ || true
+              cp ../common/packs.json $out/share/appreciate/packs.json
               cp appreciate.desktop $out/share/applications/ || true
 
               cat > $out/bin/appreciate <<WRAPPER

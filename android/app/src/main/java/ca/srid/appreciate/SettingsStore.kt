@@ -6,9 +6,9 @@ import org.json.JSONObject
 
 /**
  * Persists user preferences via SharedPreferences.
- * Mirror of the macOS SettingsStore.
+ * Default packs are loaded from assets/packs.json (common/packs.json).
  */
-class SettingsStore(context: Context) {
+class SettingsStore(private val context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("appreciate_prefs", Context.MODE_PRIVATE)
 
@@ -21,20 +21,35 @@ class SettingsStore(context: Context) {
         private const val KEY_ENABLED = "enabled"
         private const val KEY_LAUNCH_AT_BOOT = "launch_at_boot"
 
-        // SYNC: Default values must match macos/Sources/SettingsStore.swift defaults
         private const val DEFAULT_MIN_INTERVAL = 0.1f
         private const val DEFAULT_MAX_INTERVAL = 1.5f
         private const val DEFAULT_DISPLAY_DURATION = 6f
         private const val DEFAULT_ENABLED = true
         private const val DEFAULT_LAUNCH_AT_BOOT = true
-
-        // SYNC: Built-in packs must match common/packs.json
-        val DEFAULT_PACKS = linkedMapOf(
-            "Actualism Method" to "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
-            "Sensory" to "Notice the play of light and shadow around you\nListen to the layers of sound in this moment\nBreathe in \u2014 what scents are in the air?\nNotice any lingering taste in your mouth\nFeel the texture of what your hands are touching\nSense the weight of your body in the chair\nNotice the position of your arms without looking\nFeel your feet planted on the ground\nNotice the temperature where skin meets air\nSense the gentle rise and fall of your breathing\nFeel the subtle pull of gravity on your limbs\nNotice where tension sits in your body right now",
-            "Cooking" to "Don't forget turkey in the oven",
-        )
     }
+
+    /** Reads default packs from assets/packs.json. */
+    private fun loadBundledPacks(): Pair<LinkedHashMap<String, String>, String> {
+        try {
+            val json = context.assets.open("packs.json").bufferedReader().readText()
+            val obj = JSONObject(json)
+            val packsObj = obj.getJSONObject("packs")
+            val defaultPack = obj.optString("default_pack", "")
+            val map = linkedMapOf<String, String>()
+            for (key in packsObj.keys()) {
+                val arr = packsObj.getJSONArray(key)
+                val lines = (0 until arr.length()).joinToString("\n") { arr.getString(it) }
+                map[key] = lines
+            }
+            return Pair(map, defaultPack)
+        } catch (_: Exception) {
+            return Pair(linkedMapOf(), "")
+        }
+    }
+
+    private val bundled = loadBundledPacks()
+    private val bundledPacks get() = bundled.first
+    private val bundledDefaultPack get() = bundled.second
 
     /** User's packs as a mutable map. */
     var packs: LinkedHashMap<String, String>
@@ -50,7 +65,7 @@ class SettingsStore(context: Context) {
                     return map
                 } catch (_: Exception) {}
             }
-            return LinkedHashMap(DEFAULT_PACKS)
+            return LinkedHashMap(bundledPacks)
         }
         set(value) {
             val obj = JSONObject()
@@ -59,7 +74,7 @@ class SettingsStore(context: Context) {
         }
 
     var selectedPack: String
-        get() = prefs.getString(KEY_SELECTED_PACK, "Sensory") ?: "Sensory"
+        get() = prefs.getString(KEY_SELECTED_PACK, bundledDefaultPack) ?: bundledDefaultPack
         set(value) = prefs.edit().putString(KEY_SELECTED_PACK, value).apply()
 
     /** The reminder text of the currently selected pack. */
