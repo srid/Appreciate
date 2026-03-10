@@ -61,9 +61,11 @@ def main():
     # Ignore SIGINT so Ctrl+C in main app doesn't kill tray separately
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+    icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
+
     indicator = AppIndicator3.Indicator.new(
         "appreciate",
-        "dialog-information",
+        icon_path,
         AppIndicator3.IndicatorCategory.APPLICATION_STATUS,
     )
     indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
