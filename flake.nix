@@ -24,17 +24,38 @@
           isLinux = lib.hasSuffix "-linux" system;
 
           # Linux app — Python + GTK4
-          linuxApp = pkgs.writeShellApplication {
-            name = "appreciate";
-            runtimeInputs = [
-              (pkgs.python3.withPackages (ps: [ ps.pygobject3 ]))
-              pkgs.gtk4
+          linuxApp = pkgs.stdenv.mkDerivation {
+            pname = "appreciate";
+            version = "0.1.0";
+            src = ./linux;
+
+            nativeBuildInputs = [
+              pkgs.wrapGAppsHook4
+              pkgs.gobject-introspection
             ];
-            text = ''
-              export GI_TYPELIB_PATH="${pkgs.gtk4}/lib/girepository-1.0:${pkgs.gdk-pixbuf}/lib/girepository-1.0:${pkgs.pango}/lib/girepository-1.0''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
-              cd ${./linux}
-              exec python3 appreciate.py "$@"
+
+            buildInputs = [
+              pkgs.gtk4
+              pkgs.gtk3  # for tray subprocess
+              pkgs.glib
+              pkgs.libayatana-appindicator  # tray icon
+              (pkgs.python3.withPackages (ps: [ ps.pygobject3 ps.pycairo ]))
+            ];
+
+            installPhase = ''
+              mkdir -p $out/bin $out/share/appreciate $out/share/applications
+              cp *.py $out/share/appreciate/
+              cp *.png $out/share/appreciate/ || true
+              cp appreciate.desktop $out/share/applications/ || true
+
+              cat > $out/bin/appreciate <<WRAPPER
+              #!/bin/sh
+              exec ${pkgs.python3.withPackages (ps: [ ps.pygobject3 ps.pycairo ])}/bin/python3 $out/share/appreciate/appreciate.py "\$@"
+              WRAPPER
+              chmod +x $out/bin/appreciate
             '';
+
+            meta.mainProgram = "appreciate";
           };
         in
         {
