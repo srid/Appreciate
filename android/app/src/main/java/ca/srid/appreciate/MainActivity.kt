@@ -87,9 +87,10 @@ class MainActivity : AppCompatActivity() {
         bootSwitch.isChecked = settings.launchAtBoot
 
         // Pack spinner
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, SettingsStore.PACK_NAMES)
+        val packNames = settings.packNames
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, packNames)
         packSpinner.adapter = adapter
-        val selectedIndex = SettingsStore.PACK_NAMES.indexOf(settings.selectedPack)
+        val selectedIndex = packNames.indexOf(settings.selectedPack)
         if (selectedIndex >= 0) packSpinner.setSelection(selectedIndex)
 
         // SeekBar: min interval 0.5-60 min (steps of 0.5)
@@ -128,26 +129,24 @@ class MainActivity : AppCompatActivity() {
         // Pack spinner
         packSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
-                val name = SettingsStore.PACK_NAMES[position]
-                if (name != "Custom" && name != settings.selectedPack) {
-                    settings.selectPack(name)
-                    reminderTextEdit.setText(settings.reminderText)
+                val names = settings.packNames
+                if (position < names.size) {
+                    val name = names[position]
+                    if (name != settings.selectedPack) {
+                        settings.selectedPack = name
+                        reminderTextEdit.setText(settings.reminderText)
+                    }
                 }
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
 
-        // Auto-detect Custom when text is edited
+        // Text edits update the current pack's content
         reminderTextEdit.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
                 settings.reminderText = s.toString()
-                settings.checkCustomPack()
-                val idx = SettingsStore.PACK_NAMES.indexOf(settings.selectedPack)
-                if (idx >= 0 && packSpinner.selectedItemPosition != idx) {
-                    packSpinner.setSelection(idx)
-                }
             }
         })
 

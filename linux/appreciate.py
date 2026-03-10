@@ -163,16 +163,27 @@ class AppreciateApp(Gtk.Application):
         text_label.set_halign(Gtk.Align.START)
         box.append(text_label)
 
-        # Pack dropdown
-        from settings import PACK_NAMES
+        # Pack selector row
+        pack_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         pack_combo = Gtk.ComboBoxText()
-        for name in PACK_NAMES:
-            pack_combo.append_text(name)
-        current_idx = PACK_NAMES.index(self.settings.selected_pack) if self.settings.selected_pack in PACK_NAMES else len(PACK_NAMES) - 1
-        pack_combo.set_active(current_idx)
+        pack_combo.set_hexpand(True)
         self._pack_combo = pack_combo
+        self._refresh_pack_list()
         pack_combo.connect("changed", self._on_pack_changed)
-        box.append(pack_combo)
+        pack_row.append(pack_combo)
+
+        add_btn = Gtk.Button(label="+")
+        add_btn.set_tooltip_text("Add new pack")
+        add_btn.connect("clicked", self._on_add_pack)
+        pack_row.append(add_btn)
+
+        del_btn = Gtk.Button(label="\u2212")
+        del_btn.set_tooltip_text("Delete current pack")
+        del_btn.connect("clicked", self._on_delete_pack)
+        self._del_btn = del_btn
+        pack_row.append(del_btn)
+
+        box.append(pack_row)
 
         text_scroll = Gtk.ScrolledWindow()
         text_scroll.set_min_content_height(80)
@@ -273,26 +284,66 @@ class AppreciateApp(Gtk.Application):
         self._settings_window.set_visible(False)
         return True  # prevent destroy
 
+    def _refresh_pack_list(self):
+        """Rebuild the pack combo from settings."""
+        combo = self._pack_combo
+        combo.handler_block_by_func(self._on_pack_changed)
+        combo.remove_all()
+        names = self.settings.pack_names
+        for name in names:
+            combo.append_text(name)
+        idx = names.index(self.settings.selected_pack) if self.settings.selected_pack in names else 0
+        combo.set_active(idx)
+        combo.handler_unblock_by_func(self._on_pack_changed)
+        self._del_btn.set_sensitive(len(names) > 1)
+
     def _on_pack_changed(self, combo):
-        from settings import PACK_NAMES
         name = combo.get_active_text()
-        if name and name != "Custom":
-            self.settings.select_pack(name)
+        if name and name != self.settings.selected_pack:
+            self.settings.selected_pack = name
+            buf = self._text_view.get_buffer()
+            buf.handler_block_by_func(self._on_text_changed)
+            buf.set_text(self.settings.reminder_text)
+            buf.handler_unblock_by_func(self._on_text_changed)
+
+    def _on_add_pack(self, button):
+        """Show a dialog to add a new pack."""
+        dialog = Gtk.MessageDialog(
+            transient_for=self._settings_window,
+            modal=True,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.OK_CANCEL,
+            text="New Pack",
+            secondary_text="Enter a name for the new reminder pack:",
+        )
+        entry = Gtk.Entry()
+        dialog.get_content_area().append(entry)
+        dialog.connect("response", lambda d, r: self._on_add_pack_response(d, r, entry))
+        dialog.present()
+
+    def _on_add_pack_response(self, dialog, response, entry):
+        if response == Gtk.ResponseType.OK:
+            name = entry.get_text().strip()
+            if self.settings.add_pack(name):
+                self._refresh_pack_list()
+                buf = self._text_view.get_buffer()
+                buf.handler_block_by_func(self._on_text_changed)
+                buf.set_text("")
+                buf.handler_unblock_by_func(self._on_text_changed)
+        dialog.destroy()
+
+    def _on_delete_pack(self, button):
+        name = self.settings.selected_pack
+        if self.settings.delete_pack(name):
+            self._refresh_pack_list()
             buf = self._text_view.get_buffer()
             buf.handler_block_by_func(self._on_text_changed)
             buf.set_text(self.settings.reminder_text)
             buf.handler_unblock_by_func(self._on_text_changed)
 
     def _on_text_changed(self, buffer):
-        from settings import PACK_NAMES
         start, end = buffer.get_bounds()
         self.settings.reminder_text = buffer.get_text(start, end, False)
-        self.settings.check_custom_pack()
-        idx = PACK_NAMES.index(self.settings.selected_pack) if self.settings.selected_pack in PACK_NAMES else len(PACK_NAMES) - 1
-        if self._pack_combo.get_active() != idx:
-            self._pack_combo.handler_block_by_func(self._on_pack_changed)
-            self._pack_combo.set_active(idx)
-            self._pack_combo.handler_unblock_by_func(self._on_pack_changed)
 
     def _on_enabled_changed(self, switch, state):
         self.settings.enabled = state

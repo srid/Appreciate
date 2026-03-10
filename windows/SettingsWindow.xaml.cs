@@ -25,10 +25,16 @@ namespace Appreciate
             DurationSlider.Value = s.DisplayDurationSeconds;
 
             // Pack ComboBox
-            PackComboBox.ItemsSource = SettingsStore.PackNames;
-            PackComboBox.SelectedItem = s.SelectedPack;
+            RefreshPackList();
 
             UpdateLabels();
+        }
+
+        private void RefreshPackList()
+        {
+            var s = SettingsStore.Instance;
+            PackComboBox.ItemsSource = s.PackNames;
+            PackComboBox.SelectedItem = s.SelectedPack;
         }
 
         private void SaveSettings()
@@ -68,21 +74,66 @@ namespace Appreciate
 
         private void OnPackChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (PackComboBox.SelectedItem is string name && name != "Custom")
+            if (PackComboBox.SelectedItem is string name)
             {
-                SettingsStore.Instance.SelectPack(name);
-                ReminderTextBox.Text = SettingsStore.Instance.ReminderText;
+                var s = SettingsStore.Instance;
+                if (name != s.SelectedPack)
+                {
+                    s.SelectedPack = name;
+                    ReminderTextBox.Text = s.ReminderText;
+                }
             }
         }
 
         private void OnReminderTextChanged(object sender, TextChangedEventArgs e)
         {
-            var s = SettingsStore.Instance;
-            s.ReminderText = ReminderTextBox.Text;
-            s.CheckCustomPack();
-            if (PackComboBox.SelectedItem as string != s.SelectedPack)
+            SettingsStore.Instance.ReminderText = ReminderTextBox.Text;
+        }
+
+        private void OnAddPack(object sender, RoutedEventArgs e)
+        {
+            // Simple input dialog using a message box workaround
+            var dialog = new Window
             {
-                PackComboBox.SelectedItem = s.SelectedPack;
+                Title = "New Pack",
+                Width = 300,
+                Height = 140,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                ResizeMode = ResizeMode.NoResize,
+                Background = new System.Windows.Media.SolidColorBrush(
+                    (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1E1E1E")),
+            };
+
+            var panel = new StackPanel { Margin = new Thickness(16) };
+            var label = new TextBlock { Text = "Pack name:", Foreground = System.Windows.Media.Brushes.White, Margin = new Thickness(0, 0, 0, 8) };
+            var textBox = new TextBox { Background = new System.Windows.Media.SolidColorBrush(
+                (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#2D2D2D")),
+                Foreground = System.Windows.Media.Brushes.White };
+            var okButton = new Button { Content = "Add", Margin = new Thickness(0, 12, 0, 0) };
+            okButton.Click += (_, _) =>
+            {
+                if (SettingsStore.Instance.AddPack(textBox.Text))
+                {
+                    RefreshPackList();
+                    ReminderTextBox.Text = "";
+                }
+                dialog.Close();
+            };
+            panel.Children.Add(label);
+            panel.Children.Add(textBox);
+            panel.Children.Add(okButton);
+            dialog.Content = panel;
+            dialog.ShowDialog();
+        }
+
+        private void OnDeletePack(object sender, RoutedEventArgs e)
+        {
+            var s = SettingsStore.Instance;
+            if (s.DeletePack(s.SelectedPack))
+            {
+                RefreshPackList();
+                ReminderTextBox.Text = s.ReminderText;
             }
         }
 

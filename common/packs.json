@@ -1,17 +1,26 @@
 {
   "packs": {
-    "Actualist": [
+    "Actualism Method": [
       "Enjoy & appreciate simply being alive",
       "Enjoy & appreciate being here now"
     ],
     "Sensory": [
-      "What can you hear right now?",
-      "Feel the air on your skin",
-      "Notice the colours around you"
+      "Notice the play of light and shadow around you",
+      "Listen to the layers of sound in this moment",
+      "Breathe in — what scents are in the air?",
+      "Notice any lingering taste in your mouth",
+      "Feel the texture of what your hands are touching",
+      "Sense the weight of your body in the chair",
+      "Notice the position of your arms without looking",
+      "Feel your feet planted on the ground",
+      "Notice the temperature where skin meets air",
+      "Sense the gentle rise and fall of your breathing",
+      "Feel the subtle pull of gravity on your limbs",
+      "Notice where tension sits in your body right now"
     ],
     "Cooking": [
       "Don't forget turkey in the oven"
     ]
   },
-  "default_pack": "Actualist"
+  "default_pack": "Actualism Method"
 }

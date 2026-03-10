@@ -28,10 +28,17 @@
 
         <TextBlock Grid.Row="2" Text="Reminder Text (one per line)"
                    Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,0,0,6"/>
-        <ComboBox Grid.Row="3" x:Name="PackComboBox"
-                  Background="#2D2D2D" Foreground="White"
-                  FontSize="13" Margin="0,0,0,8"
-                  SelectionChanged="OnPackChanged"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,0,0,8">
+            <ComboBox x:Name="PackComboBox"
+                      Background="#2D2D2D" Foreground="White"
+                      FontSize="13" MinWidth="200"
+                      SelectionChanged="OnPackChanged"/>
+            <Button Content="+" FontSize="14" Padding="8,2" Margin="8,0,0,0"
+                    Click="OnAddPack" ToolTip="Add new pack"/>
+            <Button Content="−" FontSize="14" Padding="8,2" Margin="4,0,0,0"
+                    x:Name="DeletePackButton"
+                    Click="OnDeletePack" ToolTip="Delete current pack"/>
+        </StackPanel>
         <TextBox Grid.Row="4" x:Name="ReminderTextBox"
                  AcceptsReturn="True" TextWrapping="Wrap"
                  Height="80" Background="#2D2D2D" Foreground="White"

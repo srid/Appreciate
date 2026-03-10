@@ -18,41 +18,52 @@ namespace Appreciate
         private static SettingsStore? _instance;
         public static SettingsStore Instance => _instance ??= Load();
 
-        // SYNC: Default values must match macos/Sources/SettingsStore.swift and android/.../SettingsStore.kt
-        public string ReminderText { get; set; } = "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now";
-        public string SelectedPack { get; set; } = "Actualist";
+        // SYNC: Built-in packs must match common/packs.json
+        public static readonly Dictionary<string, string> DefaultPacks = new()
+        {
+            ["Actualism Method"] = "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
+            ["Sensory"] = "Notice the play of light and shadow around you\nListen to the layers of sound in this moment\nBreathe in — what scents are in the air?\nNotice any lingering taste in your mouth\nFeel the texture of what your hands are touching\nSense the weight of your body in the chair\nNotice the position of your arms without looking\nFeel your feet planted on the ground\nNotice the temperature where skin meets air\nSense the gentle rise and fall of your breathing\nFeel the subtle pull of gravity on your limbs\nNotice where tension sits in your body right now",
+            ["Cooking"] = "Don't forget turkey in the oven",
+        };
+
+        /// <summary>User's packs (editable dictionary).</summary>
+        public Dictionary<string, string> Packs { get; set; } = new(DefaultPacks);
+        public string SelectedPack { get; set; } = "Actualism Method";
         public float MinIntervalMinutes { get; set; } = 0.1f;
         public float MaxIntervalMinutes { get; set; } = 1.5f;
         public float DisplayDurationSeconds { get; set; } = 6f;
         public bool IsEnabled { get; set; } = true;
         public bool LaunchAtLogin { get; set; } = true;
 
-        // SYNC: Packs must match common/packs.json
-        public static readonly Dictionary<string, string> Packs = new()
+        /// <summary>The reminder text of the current pack.</summary>
+        public string ReminderText
         {
-            ["Actualist"] = "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
-            ["Sensory"] = "What can you hear right now?\nFeel the air on your skin\nNotice the colours around you",
-            ["Cooking"] = "Don't forget turkey in the oven",
-        };
-        public static readonly string[] PackNames = Packs.Keys.Append("Custom").ToArray();
-
-        public void SelectPack(string name)
-        {
-            if (Packs.TryGetValue(name, out var text))
-            {
-                ReminderText = text;
-                SelectedPack = name;
-                Save();
-            }
+            get => Packs.TryGetValue(SelectedPack, out var text) ? text : "";
+            set { Packs[SelectedPack] = value; }
         }
 
-        public void CheckCustomPack()
+        /// <summary>Sorted pack names for display.</summary>
+        public string[] PackNames => Packs.Keys.OrderBy(k => k).ToArray();
+
+        /// <summary>Add a new pack. Returns false if name already exists.</summary>
+        public bool AddPack(string name)
         {
-            var trimmed = ReminderText.Trim();
-            if (!Packs.Values.Any(v => v.Trim() == trimmed))
-            {
-                SelectedPack = "Custom";
-            }
+            if (string.IsNullOrWhiteSpace(name) || Packs.ContainsKey(name)) return false;
+            Packs[name] = "";
+            SelectedPack = name;
+            Save();
+            return true;
+        }
+
+        /// <summary>Delete a pack. Cannot delete last remaining pack.</summary>
+        public bool DeletePack(string name)
+        {
+            if (Packs.Count <= 1 || !Packs.ContainsKey(name)) return false;
+            Packs.Remove(name);
+            if (SelectedPack == name)
+                SelectedPack = Packs.Keys.OrderBy(k => k).First();
+            Save();
+            return true;
         }
 
         /// <summary>Returns a random line from ReminderText.</summary>
@@ -80,7 +91,11 @@ namespace Appreciate
                 if (File.Exists(SettingsFile))
                 {
                     var json = File.ReadAllText(SettingsFile);
-                    return JsonSerializer.Deserialize<SettingsStore>(json) ?? new SettingsStore();
+                    var store = JsonSerializer.Deserialize<SettingsStore>(json) ?? new SettingsStore();
+                    // Ensure selected pack exists
+                    if (!store.Packs.ContainsKey(store.SelectedPack))
+                        store.SelectedPack = store.Packs.Keys.OrderBy(k => k).FirstOrDefault() ?? "Actualism Method";
+                    return store;
                 }
             }
             catch { }
