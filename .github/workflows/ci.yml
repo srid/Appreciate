@@ -48,3 +48,11 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@main
       - name: Build Linux AppImage
         run: nix build .#linux-appimage
+
+  build-linux-arm:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Build Linux ARM AppImage
+        run: nix build .#linux-appimage

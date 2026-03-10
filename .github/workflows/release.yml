@@ -99,17 +99,37 @@ jobs:
 
       - name: Package Linux AppImage
         run: |
-          cp -L result "Appreciate-Linux-${{ inputs.version }}.AppImage"
-          chmod +x "Appreciate-Linux-${{ inputs.version }}.AppImage"
+          cp -L result "Appreciate-Linux-x86_64-${{ inputs.version }}.AppImage"
+          chmod +x "Appreciate-Linux-x86_64-${{ inputs.version }}.AppImage"
 
       - name: Upload Linux AppImage
         uses: actions/upload-artifact@v4
         with:
           name: linux-appimage
-          path: "Appreciate-Linux-*.AppImage"
+          path: "Appreciate-Linux-x86_64-*.AppImage"
+
+  build-linux-arm:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Build Linux ARM AppImage
+        run: nix build .#linux-appimage
+
+      - name: Package Linux ARM AppImage
+        run: |
+          cp -L result "Appreciate-Linux-ARM-${{ inputs.version }}.AppImage"
+          chmod +x "Appreciate-Linux-ARM-${{ inputs.version }}.AppImage"
+
+      - name: Upload Linux ARM AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm-appimage
+          path: "Appreciate-Linux-ARM-*.AppImage"
 
   release:
-    needs: [build-macos, build-android, build-windows, build-linux]
+    needs: [build-macos, build-android, build-windows, build-linux, build-linux-arm]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -163,4 +183,5 @@ jobs:
             macos-dmg/Appreciate-macOS-*.dmg
             android-apk/Appreciate-Android-*.apk
             windows-exe/Appreciate-Windows-*.exe
-            linux-appimage/Appreciate-Linux-*.AppImage
+            linux-appimage/Appreciate-Linux-x86_64-*.AppImage
+            linux-arm-appimage/Appreciate-Linux-ARM-*.AppImage

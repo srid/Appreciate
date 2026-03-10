@@ -116,7 +116,9 @@ nix run github:srid/Appreciate
 
 ### Install from AppImage
 
-1. Download the latest `.AppImage` from [Releases](../../releases)
+AppImages are available for both **x86_64** and **ARM (aarch64)**.
+
+1. Download the latest `.AppImage` for your architecture from [Releases](../../releases)
 2. Make executable and run:
    ```bash
    chmod +x Appreciate-Linux-*.AppImage
@@ -143,7 +145,7 @@ nix run github:srid/Appreciate
 1. Go to [Actions → Release](../../actions/workflows/release.yml)
 2. Click **Run workflow**
 3. Enter a version tag (e.g. `v1.1.0`)
-4. The workflow builds macOS DMG, Android APK, Windows EXE, and Linux AppImage, and attaches all to the Release
+4. The workflow builds macOS DMG, Android APK, Windows EXE, and Linux AppImages (x86_64 + ARM), and attaches all to the Release
 
 ## License
 
