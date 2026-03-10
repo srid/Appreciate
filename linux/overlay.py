@@ -203,6 +203,8 @@ class OverlayWindow(Gtk.Window):
 
     def _cleanup(self):
         """Remove CSS provider and destroy window."""
+        if self in _active_overlays:
+            _active_overlays.remove(self)
         if self._css_provider:
             Gtk.StyleContext.remove_provider_for_display(
                 Gdk.Display.get_default(),
@@ -211,8 +213,21 @@ class OverlayWindow(Gtk.Window):
         self.destroy()
 
 
+# Track active overlay windows so we can dismiss them
+_active_overlays: list[OverlayWindow] = []
+
+
+def _dismiss_all():
+    """Dismiss any existing overlays (matches macOS OverlayManager.dismiss)."""
+    for win in list(_active_overlays):
+        win._cleanup()
+    _active_overlays.clear()
+
+
 def show_overlay(text, duration):
     """Show overlays on all monitors with shared randomized style."""
+    _dismiss_all()
+
     display = Gdk.Display.get_default()
     if display is None:
         return
@@ -225,4 +240,5 @@ def show_overlay(text, duration):
         monitor = monitors.get_item(i)
         geom = monitor.get_geometry()
         overlay = OverlayWindow(text, duration, style, geom)
+        _active_overlays.append(overlay)
         overlay.present()
