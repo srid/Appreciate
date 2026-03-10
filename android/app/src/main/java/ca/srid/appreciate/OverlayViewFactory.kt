@@ -26,80 +26,7 @@ import android.widget.TextView
  */
 class OverlayViewFactory(private val context: Context) {
 
-    // SYNC: Color palette must match macos/Sources/OverlayManager.swift vibrantColors
-    private val vibrantColors = listOf(
-        floatArrayOf(0.05f, 0.85f, 0.95f),
-        floatArrayOf(0.08f, 0.90f, 1.0f),
-        floatArrayOf(0.12f, 0.80f, 1.0f),
-        floatArrayOf(0.95f, 0.70f, 1.0f),
-        floatArrayOf(0.55f, 0.75f, 0.95f),
-        floatArrayOf(0.50f, 0.60f, 1.0f),
-        floatArrayOf(0.45f, 0.70f, 0.90f),
-        floatArrayOf(0.75f, 0.60f, 0.95f),
-        floatArrayOf(0.30f, 0.80f, 0.90f),
-        floatArrayOf(0.85f, 0.65f, 1.0f),
-        floatArrayOf(0.65f, 0.70f, 1.0f),
-        floatArrayOf(0.15f, 0.90f, 1.0f),
-        floatArrayOf(0.35f, 0.95f, 1.0f),
-        floatArrayOf(0.80f, 0.80f, 1.0f),
-        floatArrayOf(0.00f, 0.80f, 1.0f),
-        floatArrayOf(0.60f, 0.35f, 1.0f),
-        floatArrayOf(0.85f, 0.30f, 1.0f),
-        floatArrayOf(0.40f, 0.35f, 0.95f),
-    )
-
-    private val fontFamilies = listOf(
-        Typeface.DEFAULT,
-        Typeface.SERIF,
-        Typeface.SANS_SERIF,
-        Typeface.MONOSPACE
-    )
-
-    // SYNC: Animation kinds must match macos/Sources/OverlayManager.swift AnimationKind
-    enum class AnimationKind {
-        FADE, SLIDE_TOP, SLIDE_BOTTOM, SLIDE_LEFT, SLIDE_RIGHT, SCALE_UP, BLUR_FADE
-    }
-
-    data class OverlayStyle(
-        val fontSize: Float,
-        val textColor: Int,
-        val typeface: Typeface,
-        val isBold: Boolean,
-        val rotation: Float,
-        val animationKind: AnimationKind,
-        val showPill: Boolean,
-        val pillColor: Int,
-        val scaleBreathing: Boolean,
-        val targetScale: Float,
-        val xOffsetFraction: Float,
-        val yOffsetFraction: Float
-    )
-
-    private fun randomStyle(): OverlayStyle {
-        val hsb = vibrantColors.random()
-        val textColor = Color.HSVToColor(floatArrayOf(hsb[0] * 360f, hsb[1], hsb[2]))
-
-        val showPill = Math.random() < 0.5
-        val pillColor = if (Math.random() < 0.5)
-            Color.argb(100, 0, 0, 0)
-        else
-            Color.argb(40, 255, 255, 255)
-
-        return OverlayStyle(
-            fontSize = (36f + Math.random().toFloat() * 36f),
-            textColor = textColor,
-            typeface = fontFamilies.random(),
-            isBold = Math.random() < 0.5,
-            rotation = (-3f + Math.random().toFloat() * 6f),
-            animationKind = AnimationKind.entries.toTypedArray().random(),
-            showPill = showPill,
-            pillColor = pillColor,
-            scaleBreathing = Math.random() < 0.5,
-            targetScale = (1.0f + Math.random().toFloat() * 0.08f),
-            xOffsetFraction = (-0.15f + Math.random().toFloat() * 0.3f),
-            yOffsetFraction = (-0.15f + Math.random().toFloat() * 0.3f)
-        )
-    }
+    private fun randomStyle() = OverlayStyle.randomStyle()
 
     /**
      * Creates a full-screen overlay FrameLayout with the reminder text, randomized styling,
@@ -175,7 +102,7 @@ class OverlayViewFactory(private val context: Context) {
 
     private fun animateIn(
         view: TextView,
-        style: OverlayStyle,
+        style: OverlayStyle.Style,
         displayDuration: Float,
         onDismiss: () -> Unit
     ) {
@@ -196,15 +123,15 @@ class OverlayViewFactory(private val context: Context) {
             val initialTransX = view.translationX
             val initialTransY = view.translationY
             when (style.animationKind) {
-                AnimationKind.SLIDE_TOP -> view.translationY = initialTransY - 400f
-                AnimationKind.SLIDE_BOTTOM -> view.translationY = initialTransY + 400f
-                AnimationKind.SLIDE_LEFT -> view.translationX = initialTransX - 600f
-                AnimationKind.SLIDE_RIGHT -> view.translationX = initialTransX + 600f
-                AnimationKind.SCALE_UP -> {
+                OverlayStyle.AnimationKind.SLIDE_TOP -> view.translationY = initialTransY - 400f
+                OverlayStyle.AnimationKind.SLIDE_BOTTOM -> view.translationY = initialTransY + 400f
+                OverlayStyle.AnimationKind.SLIDE_LEFT -> view.translationX = initialTransX - 600f
+                OverlayStyle.AnimationKind.SLIDE_RIGHT -> view.translationX = initialTransX + 600f
+                OverlayStyle.AnimationKind.SCALE_UP -> {
                     view.scaleX = 0.3f
                     view.scaleY = 0.3f
                 }
-                AnimationKind.BLUR_FADE, AnimationKind.FADE -> { /* just opacity */ }
+                OverlayStyle.AnimationKind.BLUR_FADE, OverlayStyle.AnimationKind.FADE -> { /* just opacity */ }
             }
 
             // Entrance animation using ViewPropertyAnimator (ignores animator_duration_scale)
@@ -213,9 +140,9 @@ class OverlayViewFactory(private val context: Context) {
                 .setDuration(600)
 
             when (style.animationKind) {
-                AnimationKind.SLIDE_TOP, AnimationKind.SLIDE_BOTTOM -> enter.translationY(initialTransY)
-                AnimationKind.SLIDE_LEFT, AnimationKind.SLIDE_RIGHT -> enter.translationX(initialTransX)
-                AnimationKind.SCALE_UP -> enter.scaleX(1f).scaleY(1f)
+                OverlayStyle.AnimationKind.SLIDE_TOP, OverlayStyle.AnimationKind.SLIDE_BOTTOM -> enter.translationY(initialTransY)
+                OverlayStyle.AnimationKind.SLIDE_LEFT, OverlayStyle.AnimationKind.SLIDE_RIGHT -> enter.translationX(initialTransX)
+                OverlayStyle.AnimationKind.SCALE_UP -> enter.scaleX(1f).scaleY(1f)
                 else -> {}
             }
 
@@ -233,7 +160,7 @@ class OverlayViewFactory(private val context: Context) {
                     .alpha(0f)
                     .setDuration(1500)
 
-                if (style.animationKind == AnimationKind.SCALE_UP) {
+                if (style.animationKind == OverlayStyle.AnimationKind.SCALE_UP) {
                     exit.scaleX(1.5f).scaleY(1.5f)
                 }
 

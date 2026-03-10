@@ -14,14 +14,20 @@ import android.widget.TextView
 
 /**
  * Android Screensaver (DreamService) that shows rotating reminder text
- * with randomized styling. Users can set this as their screen saver in
+ * with full anti-habituation styling (same as the regular overlay).
+ * Users can set this as their screen saver in
  * Settings → Display → Screen saver to display reminders on the
  * Always On Display (AOD) or when the device is idle/charging.
+ *
+ * Uses a fixed 15-second cycle (independent of the app's interval settings,
+ * which are designed for the regular overlay cadence).
  */
 class AppreciateScreensaver : DreamService() {
 
     companion object {
         private const val TAG = "AppreciateScreensaver"
+        /** How long each reminder stays on screen before transitioning (seconds). */
+        private const val CYCLE_SECONDS = 15f
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -51,9 +57,9 @@ class AppreciateScreensaver : DreamService() {
         container.removeAllViews()
 
         val text = settings.randomLine
-        val style = randomScreensaverStyle()
+        val style = OverlayStyle.randomStyle()
 
-        Log.d(TAG, "Showing: \"$text\"")
+        Log.d(TAG, "Showing: \"$text\" anim=${style.animationKind}")
 
         val textView = TextView(this).apply {
             this.text = text
@@ -63,6 +69,7 @@ class AppreciateScreensaver : DreamService() {
                 Typeface.create(style.typeface, Typeface.BOLD)
             else
                 style.typeface
+            this.rotation = style.rotation
             gravity = Gravity.CENTER
             setShadowLayer(16f, 2f, 2f, Color.argb(150, 0, 0, 0))
 
@@ -89,104 +96,87 @@ class AppreciateScreensaver : DreamService() {
         )
         container.addView(textView, params)
 
-        // Apply position offset after layout
+        // Apply position offset, animate entrance, schedule exit — all after layout
         container.post {
             val maxTextWidth = (container.width * 0.8f).toInt()
             textView.maxWidth = maxTextWidth
 
             val maxXOffset = container.width * style.xOffsetFraction
             val maxYOffset = container.height * style.yOffsetFraction
-
             val halfW = textView.width / 2f
             val halfH = textView.height / 2f
             val maxClampX = (container.width / 2f - halfW).coerceAtLeast(0f)
             val maxClampY = (container.height / 2f - halfH).coerceAtLeast(0f)
-            textView.translationX = maxXOffset.coerceIn(-maxClampX, maxClampX)
-            textView.translationY = maxYOffset.coerceIn(-maxClampY, maxClampY)
+            val finalTransX = maxXOffset.coerceIn(-maxClampX, maxClampX)
+            val finalTransY = maxYOffset.coerceIn(-maxClampY, maxClampY)
+            textView.translationX = finalTransX
+            textView.translationY = finalTransY
 
-            // Fade in
+            // --- Entrance animation ---
             textView.alpha = 0f
-            textView.animate().alpha(1f).setDuration(1000).start()
+            when (style.animationKind) {
+                OverlayStyle.AnimationKind.SLIDE_TOP -> textView.translationY = finalTransY - 400f
+                OverlayStyle.AnimationKind.SLIDE_BOTTOM -> textView.translationY = finalTransY + 400f
+                OverlayStyle.AnimationKind.SLIDE_LEFT -> textView.translationX = finalTransX - 600f
+                OverlayStyle.AnimationKind.SLIDE_RIGHT -> textView.translationX = finalTransX + 600f
+                OverlayStyle.AnimationKind.SCALE_UP -> {
+                    textView.scaleX = 0.3f
+                    textView.scaleY = 0.3f
+                }
+                OverlayStyle.AnimationKind.BLUR_FADE, OverlayStyle.AnimationKind.FADE -> { /* just opacity */ }
+            }
+
+            val enter = textView.animate().alpha(1f).setDuration(800)
+            when (style.animationKind) {
+                OverlayStyle.AnimationKind.SLIDE_TOP, OverlayStyle.AnimationKind.SLIDE_BOTTOM -> enter.translationY(finalTransY)
+                OverlayStyle.AnimationKind.SLIDE_LEFT, OverlayStyle.AnimationKind.SLIDE_RIGHT -> enter.translationX(finalTransX)
+                OverlayStyle.AnimationKind.SCALE_UP -> enter.scaleX(1f).scaleY(1f)
+                else -> {}
+            }
+            enter.start()
+
+            // --- Scale breathing ---
+            if (style.scaleBreathing) {
+                fun breatheLoop() {
+                    textView.animate()
+                        .scaleX(style.targetScale)
+                        .scaleY(style.targetScale)
+                        .setDuration(1500)
+                        .withEndAction {
+                            textView.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(1500)
+                                .withEndAction { breatheLoop() }
+                                .start()
+                        }
+                        .start()
+                }
+                handler.postDelayed({ breatheLoop() }, 800)
+            }
         }
 
-        // Schedule next cycle: display duration + 2s transition gap
-        val cycleMs = ((settings.displayDurationSeconds + 2f) * 1000).toLong()
+        // --- Schedule exit → next cycle ---
+        val holdMs = (CYCLE_SECONDS * 1000).toLong()
+        val exitDelay = 800 + holdMs // entrance + hold
         cycleRunnable = Runnable {
-            // Fade out then show next
-            textView.animate()
+            val exit = textView.animate()
                 .alpha(0f)
-                .setDuration(1000)
-                .withEndAction { showNextReminder() }
-                .start()
+                .setDuration(1200)
+
+            if (style.animationKind == OverlayStyle.AnimationKind.SCALE_UP) {
+                exit.scaleX(1.5f).scaleY(1.5f)
+            }
+
+            exit.withEndAction { showNextReminder() }
+            exit.start()
         }
-        handler.postDelayed(cycleRunnable!!, cycleMs)
+        handler.postDelayed(cycleRunnable!!, exitDelay)
     }
 
     override fun onDetachedFromWindow() {
         cycleRunnable?.let { handler.removeCallbacks(it) }
         super.onDetachedFromWindow()
         Log.d(TAG, "Screensaver detached")
-    }
-
-    // SYNC: Color palette must match OverlayViewFactory.vibrantColors
-    private val vibrantColors = listOf(
-        floatArrayOf(0.05f, 0.85f, 0.95f),
-        floatArrayOf(0.08f, 0.90f, 1.0f),
-        floatArrayOf(0.12f, 0.80f, 1.0f),
-        floatArrayOf(0.95f, 0.70f, 1.0f),
-        floatArrayOf(0.55f, 0.75f, 0.95f),
-        floatArrayOf(0.50f, 0.60f, 1.0f),
-        floatArrayOf(0.45f, 0.70f, 0.90f),
-        floatArrayOf(0.75f, 0.60f, 0.95f),
-        floatArrayOf(0.30f, 0.80f, 0.90f),
-        floatArrayOf(0.85f, 0.65f, 1.0f),
-        floatArrayOf(0.65f, 0.70f, 1.0f),
-        floatArrayOf(0.15f, 0.90f, 1.0f),
-        floatArrayOf(0.35f, 0.95f, 1.0f),
-        floatArrayOf(0.80f, 0.80f, 1.0f),
-        floatArrayOf(0.00f, 0.80f, 1.0f),
-        floatArrayOf(0.60f, 0.35f, 1.0f),
-        floatArrayOf(0.85f, 0.30f, 1.0f),
-        floatArrayOf(0.40f, 0.35f, 0.95f),
-    )
-
-    private val fontFamilies = listOf(
-        Typeface.DEFAULT,
-        Typeface.SERIF,
-        Typeface.SANS_SERIF,
-        Typeface.MONOSPACE
-    )
-
-    private data class ScreensaverStyle(
-        val fontSize: Float,
-        val textColor: Int,
-        val typeface: Typeface,
-        val isBold: Boolean,
-        val showPill: Boolean,
-        val pillColor: Int,
-        val xOffsetFraction: Float,
-        val yOffsetFraction: Float
-    )
-
-    private fun randomScreensaverStyle(): ScreensaverStyle {
-        val hsb = vibrantColors.random()
-        val textColor = Color.HSVToColor(floatArrayOf(hsb[0] * 360f, hsb[1], hsb[2]))
-
-        val showPill = Math.random() < 0.5
-        val pillColor = if (Math.random() < 0.5)
-            Color.argb(100, 0, 0, 0)
-        else
-            Color.argb(40, 255, 255, 255)
-
-        return ScreensaverStyle(
-            fontSize = (30f + Math.random().toFloat() * 24f), // slightly smaller for AOD
-            textColor = textColor,
-            typeface = fontFamilies.random(),
-            isBold = Math.random() < 0.5,
-            showPill = showPill,
-            pillColor = pillColor,
-            xOffsetFraction = (-0.15f + Math.random().toFloat() * 0.3f),
-            yOffsetFraction = (-0.15f + Math.random().toFloat() * 0.3f)
-        )
     }
 }
