@@ -10,10 +10,11 @@ SYNC: Animation types, color palette, and styling must match
 """
 
 import random
+import math
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
-from gi.repository import Gtk, Gdk, GLib, Pango
+from gi.repository import Gtk, Gdk, GLib, Pango, Gsk, Graphene
 
 # SYNC: HSV color palette — keep in sync across all platforms
 COLORS = [
@@ -38,7 +39,7 @@ FONT_WEIGHTS = [
 # SYNC: Animation kinds — match macOS AnimationKind
 ANIMATION_KINDS = [
     "fade", "slide_top", "slide_bottom", "slide_left", "slide_right",
-    "scale_up", "blur_in",
+    "scale_up",
 ]
 
 
@@ -56,8 +57,6 @@ class OverlayStyle:
         self.show_pill = random.random() < 0.3
         self.pill_dark = random.random() < 0.5         # SYNC: black or white pill
         self.pill_opacity = random.uniform(0.5, 0.85)
-        self.scale_breathe = random.random() < 0.5
-        self.target_scale = random.uniform(1.0, 1.08)
 
 
 class OverlayWindow(Gtk.Window):
@@ -70,19 +69,21 @@ class OverlayWindow(Gtk.Window):
         self._style = style
         self._duration = duration
         self._css_provider = None
+        self._content = None
 
-        # Fullscreen transparent window — text positioned via alignment/margins
+        # SYNC: macOS uses ±25% of screen size as offset from center
         if monitor_geometry:
             self.set_default_size(monitor_geometry.width, monitor_geometry.height)
-            # Random position within monitor as margin offsets
-            margin_x = int(monitor_geometry.width * random.uniform(0.05, 0.7))
-            margin_y = int(monitor_geometry.height * random.uniform(0.05, 0.7))
+            cx = monitor_geometry.width // 2
+            cy = monitor_geometry.height // 2
+            margin_x = cx + int(monitor_geometry.width * random.uniform(-0.25, 0.25))
+            margin_y = cy + int(monitor_geometry.height * random.uniform(-0.25, 0.25))
         else:
             self.set_default_size(1920, 1080)
-            margin_x = random.randint(100, 800)
-            margin_y = random.randint(100, 500)
+            margin_x = random.randint(200, 1200)
+            margin_y = random.randint(200, 800)
 
-        # Apply CSS for transparent background + text styling
+        # Apply CSS
         css = self._build_css()
         provider = Gtk.CssProvider()
         provider.load_from_data(css.encode())
@@ -97,7 +98,7 @@ class OverlayWindow(Gtk.Window):
         # Create label
         label = Gtk.Label(label=text)
         label.add_css_class("overlay-label")
-        label.set_wrap(False)  # No wrapping — single line like macOS
+        label.set_wrap(False)
 
         # Wrap in container for pill background
         if style.show_pill:
@@ -108,8 +109,9 @@ class OverlayWindow(Gtk.Window):
         else:
             content = label
 
-        # Use an overlay layout: transparent container fills the window,
-        # content positioned using margins
+        self._content = content
+
+        # Position text within fullscreen window using Gtk.Fixed
         container = Gtk.Fixed()
         container.put(content, margin_x, margin_y)
         self.set_child(container)
@@ -117,11 +119,20 @@ class OverlayWindow(Gtk.Window):
         # Click-through
         self.connect("realize", self._on_realize)
 
+        # Track animation state
+        self._slide_offset_x = 0.0
+        self._slide_offset_y = 0.0
+        self._current_scale = 1.0
+        self._target_margin_x = margin_x
+        self._target_margin_y = margin_y
+        self._container = container
+
     def _build_css(self):
         s = self._style
         pill_color = "rgba(0, 0, 0, {:.2f})".format(s.pill_opacity) if s.pill_dark \
             else "rgba(255, 255, 255, {:.2f})".format(s.pill_opacity * 0.3)
         shadow2_opacity = max(0, s.shadow_opacity - 0.1)
+        # Rotation in degrees for Gtk.Fixed transform
         return f"""
         .overlay-window {{
             background: transparent;
@@ -152,16 +163,23 @@ class OverlayWindow(Gtk.Window):
         self._animate_in()
 
     def _animate_in(self):
-        """Entrance animation over ~600ms."""
+        """Entrance animation over ~600ms with per-kind effects."""
         self._anim_start = GLib.get_monotonic_time()
         self._enter_us = 600_000
         self.set_opacity(0.0)
 
-        # Set initial state for animation kind
         kind = self._style.animation
-        self._initial_scale = 1.0
-        if kind == "scale_up":
-            self._initial_scale = 0.3
+        # SYNC: Initial offsets match macOS AnimatingOverlayView.animateIn()
+        if kind == "slide_top":
+            self._slide_offset_y = -200.0
+        elif kind == "slide_bottom":
+            self._slide_offset_y = 200.0
+        elif kind == "slide_left":
+            self._slide_offset_x = -400.0
+        elif kind == "slide_right":
+            self._slide_offset_x = 400.0
+        elif kind == "scale_up":
+            self._current_scale = 0.3
 
         self.present()
         self.fullscreen()
@@ -171,14 +189,28 @@ class OverlayWindow(Gtk.Window):
         elapsed = GLib.get_monotonic_time() - self._anim_start
         t = min(1.0, elapsed / self._enter_us)
 
-        # Spring-like ease out
+        # SYNC: Spring-like ease (macOS uses .spring(response: 0.6, dampingFraction: 0.8))
         t_ease = 1.0 - (1.0 - t) ** 3
 
         self.set_opacity(t_ease)
 
+        # Animate slide offset back to zero
+        kind = self._style.animation
+        if kind.startswith("slide_"):
+            self._slide_offset_x *= (1.0 - t_ease)
+            self._slide_offset_y *= (1.0 - t_ease)
+            # Reposition content with slide offset
+            new_x = self._target_margin_x + int(self._slide_offset_x)
+            new_y = self._target_margin_y + int(self._slide_offset_y)
+            self._container.move(self._content, new_x, new_y)
+        elif kind == "scale_up":
+            self._current_scale = 0.3 + (1.0 - 0.3) * t_ease
+
+        # Apply rotation via widget transform
+        self._apply_transform()
+
         if t >= 1.0:
             self.set_opacity(1.0)
-            # Schedule hold then exit
             GLib.timeout_add(int(self._duration * 1000), self._start_exit)
             return False
         return True
@@ -196,10 +228,27 @@ class OverlayWindow(Gtk.Window):
 
         self.set_opacity(1.0 - t)
 
+        # SYNC: macOS scaleUp exit goes to 1.5x
+        kind = self._style.animation
+        if kind == "scale_up":
+            self._current_scale = 1.0 + (0.5 * t)
+            self._apply_transform()
+
         if t >= 1.0:
             self._cleanup()
             return False
         return True
+
+    def _apply_transform(self):
+        """Apply rotation and scale to the content widget."""
+        try:
+            rotation_rad = math.radians(self._style.rotation)
+            transform = Gsk.Transform.new()
+            transform = transform.scale(self._current_scale, self._current_scale)
+            transform = transform.rotate(self._style.rotation)
+            self._content.set_transform(transform)
+        except Exception:
+            pass  # Transform not supported, skip gracefully
 
     def _cleanup(self):
         """Remove CSS provider and destroy window."""
