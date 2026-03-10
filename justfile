@@ -1,3 +1,7 @@
+# List available targets
+default:
+    @just --list
+
 # Build and deploy Android app to connected phone (resets app data for fresh packs)
 deploy-android:
     nix develop -c sh -c '\
