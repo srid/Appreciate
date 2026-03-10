@@ -4,6 +4,7 @@ Displays reminder text as a click-through overlay on all monitors.
 
 SYNC: Animation types, color palette, and styling must match
       macos/Sources/OverlayContentView.swift,
+      macos/Sources/OverlayManager.swift,
       android/.../OverlayViewFactory.kt, and
       windows/OverlayWindow.xaml.cs.
 """
@@ -28,49 +29,60 @@ FONTS = [
     "Cantarell", "Noto Sans",
 ]
 
-FONT_WEIGHTS = [Pango.Weight.NORMAL, Pango.Weight.BOLD, Pango.Weight.HEAVY]
+# SYNC: Font weights — match macOS .light,.regular,.medium,.semibold,.bold,.heavy
+FONT_WEIGHTS = [
+    Pango.Weight.LIGHT, Pango.Weight.NORMAL, Pango.Weight.MEDIUM,
+    Pango.Weight.SEMIBOLD, Pango.Weight.BOLD, Pango.Weight.HEAVY,
+]
 
-ANIMATION_KINDS = ["fade", "slide_top", "slide_bottom", "slide_left", "slide_right", "scale_up"]
+# SYNC: Animation kinds — match macOS AnimationKind
+ANIMATION_KINDS = [
+    "fade", "slide_top", "slide_bottom", "slide_left", "slide_right",
+    "scale_up", "blur_in",
+]
+
+
+class OverlayStyle:
+    """Randomized style, computed once and shared across all monitors."""
+
+    def __init__(self):
+        self.color = random.choice(COLORS)
+        self.font = random.choice(FONTS)
+        self.weight = random.choice(FONT_WEIGHTS)
+        self.font_size = random.randint(36, 72)       # SYNC: match macOS 36...72
+        self.rotation = random.uniform(-3, 3)          # SYNC: match macOS ±3°
+        self.shadow_opacity = random.uniform(0.4, 0.7) # SYNC: match macOS
+        self.animation = random.choice(ANIMATION_KINDS)
+        self.show_pill = random.random() < 0.3
+        self.pill_dark = random.random() < 0.5         # SYNC: black or white pill
+        self.pill_opacity = random.uniform(0.5, 0.85)
+        self.scale_breathe = random.random() < 0.5
+        self.target_scale = random.uniform(1.0, 1.08)
 
 
 class OverlayWindow(Gtk.Window):
-    """A transparent, click-through overlay that shows reminder text."""
+    """A fullscreen transparent, click-through overlay that shows reminder text."""
 
-    def __init__(self, text, duration, monitor_geometry=None):
+    def __init__(self, text, duration, style, monitor_geometry=None):
         super().__init__()
         self.set_decorated(False)
         self.set_resizable(False)
-
-        # Transparent background
-        self.add_css_class("overlay-window")
-
-        # Pick random style
-        self._color = random.choice(COLORS)
-        self._font = random.choice(FONTS)
-        self._weight = random.choice(FONT_WEIGHTS)
-        self._font_size = random.randint(24, 52)
-        self._rotation = random.uniform(-8, 8)
-        self._show_pill = random.random() < 0.3
-        self._animation = random.choice(ANIMATION_KINDS)
+        self._style = style
         self._duration = duration
-        self._opacity = 0.0
+        self._css_provider = None
 
-        # Position on monitor
+        # Fullscreen transparent window — text positioned via alignment/margins
         if monitor_geometry:
-            x_range = monitor_geometry.width - 600
-            y_range = monitor_geometry.height - 200
-            self._target_x = monitor_geometry.x + max(50, random.randint(0, max(1, x_range)))
-            self._target_y = monitor_geometry.y + max(50, random.randint(0, max(1, y_range)))
+            self.set_default_size(monitor_geometry.width, monitor_geometry.height)
+            # Random position within monitor as margin offsets
+            margin_x = int(monitor_geometry.width * random.uniform(0.05, 0.7))
+            margin_y = int(monitor_geometry.height * random.uniform(0.05, 0.7))
         else:
-            self._target_x = random.randint(100, 800)
-            self._target_y = random.randint(100, 500)
+            self.set_default_size(1920, 1080)
+            margin_x = random.randint(100, 800)
+            margin_y = random.randint(100, 500)
 
-        # Create label
-        self._label = Gtk.Label(label=text)
-        self._label.set_wrap(True)
-        self._label.set_max_width_chars(40)
-
-        # Apply styling via CSS
+        # Apply CSS for transparent background + text styling
         css = self._build_css()
         provider = Gtk.CssProvider()
         provider.load_from_data(css.encode())
@@ -79,38 +91,54 @@ class OverlayWindow(Gtk.Window):
             provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
-        self._label.add_css_class("overlay-label")
         self._css_provider = provider
+        self.add_css_class("overlay-window")
 
-        if self._show_pill:
+        # Create label
+        label = Gtk.Label(label=text)
+        label.add_css_class("overlay-label")
+        label.set_wrap(False)  # No wrapping — single line like macOS
+
+        # Wrap in container for pill background
+        if style.show_pill:
             box = Gtk.Box()
             box.add_css_class("overlay-pill")
-            box.append(self._label)
-            self.set_child(box)
+            box.append(label)
+            content = box
         else:
-            self.set_child(self._label)
+            content = label
 
-        # Make click-through by setting the surface input region to empty after realization
+        # Use an overlay layout: transparent container fills the window,
+        # content positioned using margins
+        container = Gtk.Fixed()
+        container.put(content, margin_x, margin_y)
+        self.set_child(container)
+
+        # Click-through
         self.connect("realize", self._on_realize)
 
     def _build_css(self):
-        pill_bg = f"rgba(0, 0, 0, 0.5)" if self._show_pill else "transparent"
+        s = self._style
+        pill_color = "rgba(0, 0, 0, {:.2f})".format(s.pill_opacity) if s.pill_dark \
+            else "rgba(255, 255, 255, {:.2f})".format(s.pill_opacity * 0.3)
+        shadow2_opacity = max(0, s.shadow_opacity - 0.1)
         return f"""
         .overlay-window {{
             background: transparent;
         }}
         .overlay-label {{
-            color: {self._color};
-            font-family: {self._font};
-            font-size: {self._font_size}px;
-            font-weight: {self._weight.value_nick};
-            text-shadow: 0px 2px 8px rgba(0, 0, 0, 0.7);
+            color: {s.color};
+            font-family: {s.font};
+            font-size: {s.font_size}px;
+            font-weight: {s.weight.value_nick};
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, {s.shadow_opacity:.2f}),
+                         0px 0px 16px rgba(0, 0, 0, {shadow2_opacity:.2f});
             padding: 12px 24px;
         }}
         .overlay-pill {{
-            background: {pill_bg};
-            border-radius: 24px;
-            padding: 4px;
+            background: {pill_color};
+            border-radius: 20px;
+            padding: 12px 20px;
         }}
         """
 
@@ -118,77 +146,83 @@ class OverlayWindow(Gtk.Window):
         """After the window is realized, make it click-through and start animation."""
         surface = self.get_surface()
         if surface and hasattr(surface, "set_input_region"):
-            # Empty input region = click-through
             region = __import__("cairo").Region()
             surface.set_input_region(region)
 
-        # Position the window
-        # GTK4 doesn't allow direct positioning of toplevels on Wayland,
-        # but on X11 it works. We use a CSS transform as fallback.
-        self.set_default_size(1, 1)
-
-        # Start entrance animation
         self._animate_in()
 
     def _animate_in(self):
-        """Fade in over 600ms using GLib tick callbacks."""
-        self._anim_start_time = GLib.get_monotonic_time()
-        self._enter_duration_us = 600_000  # 600ms in microseconds
+        """Entrance animation over ~600ms."""
+        self._anim_start = GLib.get_monotonic_time()
+        self._enter_us = 600_000
         self.set_opacity(0.0)
+
+        # Set initial state for animation kind
+        kind = self._style.animation
+        self._initial_scale = 1.0
+        if kind == "scale_up":
+            self._initial_scale = 0.3
+
         self.present()
-        GLib.timeout_add(16, self._tick_enter)  # ~60fps
+        self.fullscreen()
+        GLib.timeout_add(16, self._tick_enter)
 
     def _tick_enter(self):
-        elapsed = GLib.get_monotonic_time() - self._anim_start_time
-        progress = min(1.0, elapsed / self._enter_duration_us)
+        elapsed = GLib.get_monotonic_time() - self._anim_start
+        t = min(1.0, elapsed / self._enter_us)
 
-        # Ease out decelerate
-        progress = 1.0 - (1.0 - progress) ** 2
-        self.set_opacity(progress)
+        # Spring-like ease out
+        t_ease = 1.0 - (1.0 - t) ** 3
 
-        if progress >= 1.0:
+        self.set_opacity(t_ease)
+
+        if t >= 1.0:
             self.set_opacity(1.0)
-            # Schedule exit after hold duration
+            # Schedule hold then exit
             GLib.timeout_add(int(self._duration * 1000), self._start_exit)
-            return False  # stop
-        return True  # continue
+            return False
+        return True
 
     def _start_exit(self):
         """Begin fade-out animation."""
-        self._anim_start_time = GLib.get_monotonic_time()
-        self._exit_duration_us = 1_500_000  # 1500ms
+        self._anim_start = GLib.get_monotonic_time()
+        self._exit_us = 1_500_000
         GLib.timeout_add(16, self._tick_exit)
         return False
 
     def _tick_exit(self):
-        elapsed = GLib.get_monotonic_time() - self._anim_start_time
-        progress = min(1.0, elapsed / self._exit_duration_us)
+        elapsed = GLib.get_monotonic_time() - self._anim_start
+        t = min(1.0, elapsed / self._exit_us)
 
-        self.set_opacity(1.0 - progress)
+        self.set_opacity(1.0 - t)
 
-        if progress >= 1.0:
+        if t >= 1.0:
             self._cleanup()
             return False
         return True
 
     def _cleanup(self):
         """Remove CSS provider and destroy window."""
-        Gtk.StyleContext.remove_provider_for_display(
-            Gdk.Display.get_default(),
-            self._css_provider,
-        )
+        if self._css_provider:
+            Gtk.StyleContext.remove_provider_for_display(
+                Gdk.Display.get_default(),
+                self._css_provider,
+            )
         self.destroy()
 
 
 def show_overlay(text, duration):
-    """Show overlays on all monitors."""
+    """Show overlays on all monitors with shared randomized style."""
     display = Gdk.Display.get_default()
     if display is None:
         return
+
+    # SYNC: Shared style across all monitors (matches macOS behavior)
+    style = OverlayStyle()
 
     monitors = display.get_monitors()
     for i in range(monitors.get_n_items()):
         monitor = monitors.get_item(i)
         geom = monitor.get_geometry()
-        overlay = OverlayWindow(text, duration, geom)
+        overlay = OverlayWindow(text, duration, style, geom)
         overlay.present()
