@@ -32,7 +32,11 @@ class AppreciateApp(Gtk.Application):
             self._settings_window.present()
             return
 
+        # Keep app alive even when settings window is hidden
+        self.hold()
+
         self._create_settings_window()
+        self._setup_tray_icon()
         self._schedule_next()
 
     def _schedule_next(self):
@@ -63,6 +67,12 @@ class AppreciateApp(Gtk.Application):
         text = self.settings.random_line
         duration = self.settings.display_duration_seconds
         show_overlay(text, duration)
+
+    def _setup_tray_icon(self):
+        """Set up background mode. Re-run the command to open settings again."""
+        print("✨ Appreciate is running in the background.")
+        print("   Re-run the command to open settings.")
+        print("   Close the settings window to keep running in background.")
 
     def _create_settings_window(self):
         """Build the settings UI."""
