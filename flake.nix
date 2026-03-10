@@ -27,7 +27,7 @@
           linuxApp = pkgs.stdenv.mkDerivation {
             pname = "appreciate";
             version = "0.1.0";
-            src = ./linux;
+            src = lib.sources.sourceByRegex ./. [ "^linux.*" "^common.*" ];
 
             nativeBuildInputs = [
               pkgs.wrapGAppsHook4
@@ -44,9 +44,10 @@
 
             installPhase = ''
               mkdir -p $out/bin $out/share/appreciate $out/share/applications
-              cp *.py $out/share/appreciate/
-              cp *.png $out/share/appreciate/ || true
-              cp appreciate.desktop $out/share/applications/ || true
+              cp linux/*.py $out/share/appreciate/
+              cp linux/*.png $out/share/appreciate/ || true
+              cp common/packs.json $out/share/appreciate/packs.json
+              cp linux/appreciate.desktop $out/share/applications/ || true
 
               cat > $out/bin/appreciate <<WRAPPER
               #!/bin/sh

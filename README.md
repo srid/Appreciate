@@ -6,18 +6,19 @@
 
 🌐 [appreciate.srid.ca](https://appreciate.srid.ca)
 
-A tiny app that periodically flashes a reminder across your screen — **"Enjoy and appreciate being alive"** — as a prompt to get back to feeling good, each moment again.
+A tiny app that periodically flashes customizable reminders across your screen as transparent overlays — nudging you to stay present, feel good, or remember whatever matters to you.
 
-The text is rendered as a transparent overlay directly on your screen (not a system notification), then fades away. Interval, position, font size, color, and style are all **randomized** to prevent habituation.
+Comes with built-in **Reminder Packs** (Sensory, Actualism Method, Cooking, ...) and lets you create your own. Interval, position, font, color, and style are all **randomized** to prevent habituation.
 
 Available for **macOS**, **Android**, **Windows**, and **Linux**.
 
 ## Features
 
 - 🖥️ **Screen overlay** — reminder text appears directly on your desktop, then fades away
-- 🎲 **Anti-habituation** — everything is randomized (timing, position, color, font, animation style, background) so you never tune it out
+- 📦 **Reminder Packs** — built-in packs (Sensory, Actualism Method, Cooking) plus create your own
+- ✏️ **Fully editable** — add, delete, and edit packs; each pack has multiple lines (random pick)
+- 🎲 **Anti-habituation** — everything is randomized (timing, position, color, font, animation style)
 - 🖥️🖥️ **Multi-monitor** — appears on all screens simultaneously (macOS, Windows)
-- ⚙️ **Customizable** — multiple reminder lines (random pick), adjustable intervals and duration
 - 🎯 **Background app** — menubar on macOS, foreground service on Android, system tray on Windows
 
 ---
@@ -122,10 +123,11 @@ nix run github:srid/Appreciate
 
 | Setting | Description |
 |---|---|
-| **Reminder Text** | One per line, a random one is picked each time |
+| **Reminder Pack** | Select a pack, add new ones (+), or delete existing (−) |
+| **Reminder Text** | Editable lines for the current pack; a random one is picked each time |
 | **Enabled** | Toggle reminders on/off |
 | **Launch at Login/Boot** | Auto-start on system startup |
-| **Min/Max Interval** | Random interval range (default 1–5 min) |
+| **Min/Max Interval** | Random interval range (default 6s–1.5min) |
 | **Display Duration** | How long the overlay stays visible |
 | **✨ Show Now** | Trigger a reminder immediately |
 

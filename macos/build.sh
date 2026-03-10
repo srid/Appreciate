@@ -22,9 +22,10 @@ rm -rf "$APP_DIR"
 # Create bundle structure
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
-# Copy Info.plist and icon
+# Copy Info.plist, icon, and shared pack data
 cp "$SCRIPT_DIR/Info.plist" "$CONTENTS_DIR/Info.plist"
 cp "$SCRIPT_DIR/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
+cp "$SCRIPT_DIR/../common/packs.json" "$RESOURCES_DIR/packs.json"
 
 # Compile
 swiftc \

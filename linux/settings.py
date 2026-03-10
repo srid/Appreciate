@@ -1,9 +1,7 @@
 """
 Settings store for Appreciate (Linux).
 Persists user preferences to ~/.config/appreciate/settings.json.
-
-SYNC: Default values must match macos/Sources/SettingsStore.swift,
-      android/.../SettingsStore.kt, and windows/SettingsStore.cs.
+Default packs are loaded from packs.json bundled alongside the .py files.
 """
 
 import json
@@ -11,9 +9,34 @@ import os
 import random
 
 
-# SYNC: Default values — keep in sync across all platforms
+def _load_bundled_packs():
+    """Read default packs from packs.json (common/packs.json) bundled with the app."""
+    # Look for packs.json next to this script, then in ../common/
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(script_dir, "packs.json"),
+        os.path.join(script_dir, "..", "common", "packs.json"),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                with open(path, "r") as f:
+                    data = json.load(f)
+                packs_raw = data.get("packs", {})
+                default_pack = data.get("default_pack", "")
+                packs = {name: "\n".join(lines) for name, lines in packs_raw.items()}
+                return packs, default_pack
+            except Exception:
+                pass
+    return {}, ""
+
+
+_BUNDLED_PACKS, _BUNDLED_DEFAULT_PACK = _load_bundled_packs()
+
+# Default values — only non-pack settings are hardcoded here
 DEFAULTS = {
-    "reminder_text": "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
+    "packs": dict(_BUNDLED_PACKS),
+    "selected_pack": _BUNDLED_DEFAULT_PACK,
     "min_interval_minutes": 0.1,
     "max_interval_minutes": 1.5,
     "display_duration_seconds": 6.0,
@@ -29,8 +52,11 @@ class SettingsStore:
     """Persists user preferences to JSON."""
 
     def __init__(self):
-        self._data = dict(DEFAULTS)
+        self._data = {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULTS.items()}
         self._load()
+        # Ensure selected pack exists
+        if self.selected_pack not in self.packs:
+            self.selected_pack = sorted(self.packs.keys())[0] if self.packs else ""
 
     def _load(self):
         try:
@@ -46,14 +72,59 @@ class SettingsStore:
         with open(CONFIG_FILE, "w") as f:
             json.dump(self._data, f, indent=2)
 
+    # --- Packs ---
+
+    @property
+    def packs(self):
+        return self._data["packs"]
+
+    @packs.setter
+    def packs(self, value):
+        self._data["packs"] = value
+        self.save()
+
+    @property
+    def selected_pack(self):
+        return self._data["selected_pack"]
+
+    @selected_pack.setter
+    def selected_pack(self, value):
+        self._data["selected_pack"] = value
+        self.save()
+
     @property
     def reminder_text(self):
-        return self._data["reminder_text"]
+        return self.packs.get(self.selected_pack, "")
 
     @reminder_text.setter
     def reminder_text(self, value):
-        self._data["reminder_text"] = value
+        self.packs[self.selected_pack] = value
         self.save()
+
+    @property
+    def pack_names(self):
+        return sorted(self.packs.keys())
+
+    def add_pack(self, name):
+        """Add a new pack. Returns False if name already exists."""
+        if not name or name in self.packs:
+            return False
+        self.packs[name] = ""
+        self.selected_pack = name
+        self.save()
+        return True
+
+    def delete_pack(self, name):
+        """Delete a pack. Cannot delete the last remaining pack."""
+        if len(self.packs) <= 1 or name not in self.packs:
+            return False
+        del self.packs[name]
+        if self.selected_pack == name:
+            self.selected_pack = sorted(self.packs.keys())[0]
+        self.save()
+        return True
+
+    # --- Other settings ---
 
     @property
     def min_interval_minutes(self):
@@ -102,6 +173,6 @@ class SettingsStore:
 
     @property
     def random_line(self):
-        """Returns a random line from reminder_text."""
+        """Returns a random line from the current pack's reminder text."""
         lines = [l.strip() for l in self.reminder_text.split("\n") if l.strip()]
         return random.choice(lines) if lines else self.reminder_text

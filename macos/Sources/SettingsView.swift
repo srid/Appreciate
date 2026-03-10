@@ -4,6 +4,8 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
     var onShowNow: () -> Void
+    @State private var newPackName = ""
+    @State private var showingAddPack = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -11,11 +13,38 @@ struct SettingsView: View {
             Text("Appreciate Settings")
                 .font(.title2.bold())
 
+            // Pack selector
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Reminder Pack")
+                    .font(.headline)
+
+                HStack {
+                    Picker("", selection: $settings.selectedPack) {
+                        ForEach(settings.packNames, id: \.self) { name in
+                            Text(name).tag(name)
+                        }
+                    }
+                    .labelsHidden()
+
+                    Button("+") { showingAddPack = true }
+                        .help("Add new pack")
+
+                    Button("−") {
+                        _ = settings.deletePack(name: settings.selectedPack)
+                    }
+                    .disabled(settings.packs.count <= 1)
+                    .help("Delete current pack")
+                }
+            }
+
             // Reminder text
             VStack(alignment: .leading, spacing: 6) {
                 Text("Reminder Text (one per line)")
                     .font(.headline)
-                TextEditor(text: $settings.reminderText)
+                TextEditor(text: Binding(
+                    get: { settings.reminderText },
+                    set: { settings.reminderText = $0 }
+                ))
                     .font(.body)
                     .frame(minHeight: 60, maxHeight: 100)
                     .border(Color.secondary.opacity(0.3), width: 1)
@@ -78,6 +107,17 @@ struct SettingsView: View {
         }
         .padding(24)
         .frame(width: 420)
+        .alert("New Pack", isPresented: $showingAddPack) {
+            TextField("Pack name", text: $newPackName)
+            Button("Add") {
+                if settings.addPack(name: newPackName) {
+                    newPackName = ""
+                }
+            }
+            Button("Cancel", role: .cancel) { newPackName = "" }
+        } message: {
+            Text("Enter a name for the new reminder pack.")
+        }
     }
 
     private func formatInterval(_ minutes: Double) -> String {

@@ -9,9 +9,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -27,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settings: SettingsStore
 
     private lateinit var reminderTextEdit: EditText
+    private lateinit var packSpinner: Spinner
     private lateinit var enabledSwitch: Switch
     private lateinit var bootSwitch: Switch
     private lateinit var minIntervalSeek: SeekBar
@@ -43,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         settings = SettingsStore(this)
 
         reminderTextEdit = findViewById(R.id.reminderTextEdit)
+        packSpinner = findViewById(R.id.packSpinner)
         enabledSwitch = findViewById(R.id.enabledSwitch)
         bootSwitch = findViewById(R.id.bootSwitch)
         minIntervalSeek = findViewById(R.id.minIntervalSeek)
@@ -82,6 +86,9 @@ class MainActivity : AppCompatActivity() {
         enabledSwitch.isChecked = settings.isEnabled
         bootSwitch.isChecked = settings.launchAtBoot
 
+        // Pack spinner
+        refreshPackSpinner()
+
         // SeekBar: min interval 0.5-60 min (steps of 0.5)
         minIntervalSeek.max = 119 // 0.5 to 60, step 0.5 => (60-0.5)/0.5 = 119
         minIntervalSeek.progress = ((settings.minIntervalMinutes - 0.5f) / 0.5f).toInt()
@@ -115,6 +122,64 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
+        // Pack spinner
+        packSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                val names = settings.packNames
+                if (position < names.size) {
+                    val name = names[position]
+                    if (name != settings.selectedPack) {
+                        settings.selectedPack = name
+                        reminderTextEdit.setText(settings.reminderText)
+                    }
+                }
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        // Text edits update the current pack's content
+        reminderTextEdit.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                settings.reminderText = s.toString()
+            }
+        })
+
+        // Add pack button
+        findViewById<Button>(R.id.addPackButton).setOnClickListener {
+            val input = android.widget.EditText(this)
+            input.hint = "Pack name"
+            android.app.AlertDialog.Builder(this)
+                .setTitle("New Pack")
+                .setMessage("Enter a name for the new reminder pack:")
+                .setView(input)
+                .setPositiveButton("Add") { _, _ ->
+                    val name = input.text.toString().trim()
+                    if (settings.addPack(name)) {
+                        refreshPackSpinner()
+                        reminderTextEdit.setText("")
+                    } else {
+                        Toast.makeText(this, "Pack name already exists or is empty", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
+        // Delete pack button
+        findViewById<Button>(R.id.deletePackButton).setOnClickListener {
+            if (settings.packs.size <= 1) {
+                Toast.makeText(this, "Cannot delete the last pack", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val name = settings.selectedPack
+            if (settings.deletePack(name)) {
+                refreshPackSpinner()
+                reminderTextEdit.setText(settings.reminderText)
+            }
+        }
+
         enabledSwitch.setOnCheckedChangeListener { _, isChecked ->
             settings.isEnabled = isChecked
             val serviceIntent = Intent(this, OverlayService::class.java)
@@ -178,6 +243,14 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.grantAlarmButton).setOnClickListener {
             requestAlarmPermission()
         }
+    }
+
+    private fun refreshPackSpinner() {
+        val packNames = settings.packNames
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, packNames)
+        packSpinner.adapter = adapter
+        val selectedIndex = packNames.indexOf(settings.selectedPack)
+        if (selectedIndex >= 0) packSpinner.setSelection(selectedIndex)
     }
 
     private fun updateMinLabel() {
