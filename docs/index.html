@@ -33,8 +33,13 @@
         <p class="tagline">Customizable reminder overlays for your screen.</p>
         <p class="subtitle">A tiny app that periodically flashes reminders across your screen — with built-in packs like Sensory, Actualism Method, and more. Create your own packs or edit existing ones. All styling is randomized so you never tune it out.</p>
 
+        <div class="release-info" id="release-info">
+            <span class="version-badge" id="version-badge"></span>
+            <span class="release-date" id="release-date"></span>
+        </div>
+
         <div class="cta-row">
-            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-primary">Download</a>
+            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-primary" id="hero-download">Download</a>
             <a href="https://github.com/srid/Appreciate" class="btn btn-secondary">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
                 Source Code
@@ -100,25 +105,25 @@
             <div class="platform-icon">🍎</div>
             <h3>macOS</h3>
             <p>Menubar app. Download the DMG or build from source with Swift.</p>
-            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small">Download DMG</a>
+            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small" data-platform="macOS" data-ext=".dmg">Download DMG</a>
         </div>
         <div class="platform-card">
             <div class="platform-icon">🤖</div>
             <h3>Android <span class="badge badge-beta">beta</span></h3>
             <p>Foreground service with overlay. Includes screensaver for Always On Display. Download the APK directly.</p>
-            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small">Download APK</a>
+            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small" data-platform="Android" data-ext=".apk">Download APK</a>
         </div>
         <div class="platform-card">
             <div class="platform-icon">🪟</div>
             <h3>Windows <span class="badge badge-exp">experimental</span></h3>
             <p>System tray app built with WPF/.NET 8. Single executable.</p>
-            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small">Download EXE</a>
+            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small" data-platform="Windows" data-ext=".exe">Download EXE</a>
         </div>
         <div class="platform-card">
             <div class="platform-icon">🐧</div>
             <h3>Linux <span class="badge badge-exp">experimental</span></h3>
             <p>Python + GTK4. Install via Nix or download the tarball.</p>
-            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small">Download tarball</a>
+            <a href="https://github.com/srid/Appreciate/releases" class="btn btn-small" data-platform="Linux" data-ext=".tar.gz">Download tarball</a>
             <div style="margin-top:12px"><code style="color:#8a8a9a;font-size:0.85rem;">nix run github:srid/Appreciate</code></div>
         </div>
     </div>
@@ -140,6 +145,58 @@
 <footer>
     <p>Made by <a href="https://srid.ca">Srid</a> · <a href="https://github.com/srid/Appreciate">GitHub</a> · MIT License</p>
 </footer>
+
+<script>
+(async function () {
+    const API = 'https://api.github.com/repos/srid/Appreciate/releases/latest';
+    const fallback = 'https://github.com/srid/Appreciate/releases';
+
+    try {
+        const res = await fetch(API);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const version = data.tag_name;           // e.g. "v1.2.1"
+        const publishedAt = data.published_at;   // ISO 8601
+        const assets = data.assets || [];
+
+        // --- Hero version badge & release date ---
+        const badgeEl = document.getElementById('version-badge');
+        const dateEl = document.getElementById('release-date');
+        const infoEl = document.getElementById('release-info');
+
+        if (badgeEl) badgeEl.textContent = version;
+        if (dateEl && publishedAt) {
+            const d = new Date(publishedAt);
+            dateEl.textContent = 'Released ' + d.toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+        }
+        if (infoEl) infoEl.classList.add('visible');
+
+        // --- Hero download button ---
+        const heroBtn = document.getElementById('hero-download');
+        if (heroBtn) {
+            heroBtn.textContent = 'Download ' + version;
+            heroBtn.href = data.html_url;  // link to release page
+        }
+
+        // --- Platform download buttons ---
+        document.querySelectorAll('[data-platform]').forEach(btn => {
+            const platform = btn.getAttribute('data-platform');
+            const ext = btn.getAttribute('data-ext');
+            const asset = assets.find(a =>
+                a.name.includes(platform) && a.name.endsWith(ext)
+            );
+            if (asset) {
+                btn.href = asset.browser_download_url;
+            }
+        });
+    } catch (e) {
+        // Silently fall back — buttons already link to the generic releases page
+    }
+})();
+</script>
 
 </body>
 </html>

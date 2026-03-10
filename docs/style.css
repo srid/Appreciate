@@ -183,6 +183,40 @@ h1 {
     font-weight: 500;
 }
 
+/* ===== Release Info ===== */
+.release-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    min-height: 28px;
+}
+
+.release-info.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.version-badge {
+    background: var(--gradient);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+}
+
+.release-date {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
 .cta-row {
     display: flex;
     gap: 16px;
