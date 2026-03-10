@@ -36,7 +36,9 @@
 
             buildInputs = [
               pkgs.gtk4
+              pkgs.gtk3  # for tray subprocess
               pkgs.glib
+              pkgs.libayatana-appindicator  # tray icon
               (pkgs.python3.withPackages (ps: [ ps.pygobject3 ps.pycairo ]))
             ];
 

@@ -7,6 +7,8 @@ Usage: python appreciate.py
 """
 
 import random
+import os
+import subprocess
 import sys
 import gi
 gi.require_version("Gtk", "4.0")
@@ -26,6 +28,16 @@ class AppreciateApp(Gtk.Application):
         self.settings = SettingsStore()
         self._timer_id = None
         self._settings_window = None
+        self._tray_process = None
+
+        # Register D-Bus actions for tray communication
+        show_action = Gio.SimpleAction.new("show-now", None)
+        show_action.connect("activate", self._show_now)
+        self.add_action(show_action)
+
+        quit_action = Gio.SimpleAction.new("quit", None)
+        quit_action.connect("activate", lambda *_: self.quit())
+        self.add_action(quit_action)
 
     def do_activate(self):
         if self._settings_window is not None:
@@ -36,8 +48,31 @@ class AppreciateApp(Gtk.Application):
         self.hold()
 
         self._create_settings_window()
-        self._setup_tray_icon()
+        self._setup_tray()
         self._schedule_next()
+
+    def do_shutdown(self):
+        """Clean up tray subprocess on exit."""
+        if self._tray_process:
+            self._tray_process.terminate()
+        Gtk.Application.do_shutdown(self)
+
+    def _setup_tray(self):
+        """Spawn the tray icon as a separate GTK3 process."""
+        tray_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tray.py")
+        if os.path.exists(tray_script):
+            try:
+                self._tray_process = subprocess.Popen(
+                    [sys.executable, tray_script],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+                print("✨ Appreciate is running with tray icon.")
+            except Exception as e:
+                print(f"Tray icon unavailable: {e}")
+                print("   App runs in background. Re-run command to open settings.")
+        else:
+            print("✨ Appreciate is running in the background.")
+            print("   Re-run the command to open settings.")
 
     def _schedule_next(self):
         """Schedule the next overlay at a random interval."""
@@ -67,12 +102,6 @@ class AppreciateApp(Gtk.Application):
         text = self.settings.random_line
         duration = self.settings.display_duration_seconds
         show_overlay(text, duration)
-
-    def _setup_tray_icon(self):
-        """Set up background mode. Re-run the command to open settings again."""
-        print("✨ Appreciate is running in the background.")
-        print("   Re-run the command to open settings.")
-        print("   Close the settings window to keep running in background.")
 
     def _create_settings_window(self):
         """Build the settings UI."""
