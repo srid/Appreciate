@@ -16,6 +16,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -27,12 +28,17 @@
 
         <TextBlock Grid.Row="2" Text="Reminder Text (one per line)"
                    Foreground="White" FontSize="14" FontWeight="Bold" Margin="0,0,0,6"/>
-        <TextBox Grid.Row="3" x:Name="ReminderTextBox"
+        <ComboBox Grid.Row="3" x:Name="PackComboBox"
+                  Background="#2D2D2D" Foreground="White"
+                  FontSize="13" Margin="0,0,0,8"
+                  SelectionChanged="OnPackChanged"/>
+        <TextBox Grid.Row="4" x:Name="ReminderTextBox"
                  AcceptsReturn="True" TextWrapping="Wrap"
                  Height="80" Background="#2D2D2D" Foreground="White"
-                 BorderBrush="#444" Padding="8" FontSize="13" Margin="0,0,0,16"/>
+                 BorderBrush="#444" Padding="8" FontSize="13" Margin="0,0,0,16"
+                 TextChanged="OnReminderTextChanged"/>
 
-        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,0,0,8">
+        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,0,0,8">
             <CheckBox x:Name="EnabledCheckBox" Content="Enabled"
                       Foreground="White" FontSize="14" VerticalContentAlignment="Center"
                       Margin="0,0,24,0"/>
@@ -40,7 +46,7 @@
                       Foreground="White" FontSize="14" VerticalContentAlignment="Center"/>
         </StackPanel>
 
-        <Grid Grid.Row="5" Margin="0,8,0,4">
+        <Grid Grid.Row="6" Margin="0,8,0,4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="50"/>
@@ -56,7 +62,7 @@
                        HorizontalAlignment="Right"/>
         </Grid>
 
-        <Grid Grid.Row="6" Margin="0,8,0,4">
+        <Grid Grid.Row="7" Margin="0,8,0,4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="50"/>
@@ -72,7 +78,7 @@
                        HorizontalAlignment="Right"/>
         </Grid>
 
-        <Grid Grid.Row="7" Margin="0,8,0,16">
+        <Grid Grid.Row="8" Margin="0,8,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="50"/>
@@ -88,7 +94,7 @@
                        HorizontalAlignment="Right"/>
         </Grid>
 
-        <Button Grid.Row="9" Content="✨ Show Now" FontSize="14"
+        <Button Grid.Row="10" Content="✨ Show Now" FontSize="14"
                 x:Name="ShowNowButton" Click="OnShowNow"
                 Background="#FFB74D" Foreground="Black"
                 Padding="12,8" Cursor="Hand"/>

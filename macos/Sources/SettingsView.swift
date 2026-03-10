@@ -15,10 +15,29 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Reminder Text (one per line)")
                     .font(.headline)
+
+                // Pack picker
+                Picker("Pack", selection: Binding(
+                    get: { settings.selectedPack },
+                    set: { newPack in
+                        if newPack != "Custom" {
+                            settings.selectPack(newPack)
+                        }
+                    }
+                )) {
+                    ForEach(SettingsStore.packNames, id: \.self) { name in
+                        Text(name).tag(name)
+                    }
+                }
+                .pickerStyle(.menu)
+
                 TextEditor(text: $settings.reminderText)
                     .font(.body)
                     .frame(minHeight: 60, maxHeight: 100)
                     .border(Color.secondary.opacity(0.3), width: 1)
+                    .onChange(of: settings.reminderText) { _ in
+                        settings.checkCustomPack()
+                    }
             }
 
             Divider()

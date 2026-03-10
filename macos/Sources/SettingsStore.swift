@@ -10,12 +10,21 @@ final class SettingsStore: ObservableObject {
 
     private enum Keys {
         static let reminderText = "reminderText"
+        static let selectedPack = "selectedPack"
         static let minIntervalMinutes = "minIntervalMinutes"
         static let maxIntervalMinutes = "maxIntervalMinutes"
         static let displayDurationSeconds = "displayDurationSeconds"
         static let isEnabled = "isEnabled"
         static let launchAtLogin = "launchAtLogin"
     }
+
+    // SYNC: Packs must match common/packs.json
+    static let packs: [(name: String, text: String)] = [
+        ("Actualist", "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now"),
+        ("Sensory", "What can you hear right now?\nFeel the air on your skin\nNotice the colours around you"),
+        ("Cooking", "Don't forget turkey in the oven"),
+    ]
+    static let packNames: [String] = packs.map { $0.name } + ["Custom"]
 
     @Published var reminderText: String {
         didSet { defaults.set(reminderText, forKey: Keys.reminderText) }
@@ -33,6 +42,10 @@ final class SettingsStore: ObservableObject {
         didSet { defaults.set(displayDurationSeconds, forKey: Keys.displayDurationSeconds) }
     }
 
+    @Published var selectedPack: String {
+        didSet { defaults.set(selectedPack, forKey: Keys.selectedPack) }
+    }
+
     @Published var isEnabled: Bool {
         didSet { defaults.set(isEnabled, forKey: Keys.isEnabled) }
     }
@@ -48,6 +61,7 @@ final class SettingsStore: ObservableObject {
         // SYNC: Default values must match android/.../SettingsStore.kt defaults
         defaults.register(defaults: [
             Keys.reminderText: "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
+            Keys.selectedPack: "Actualist",
             Keys.minIntervalMinutes: 0.1,
             Keys.maxIntervalMinutes: 1.5,
             Keys.displayDurationSeconds: 6.0,
@@ -56,6 +70,7 @@ final class SettingsStore: ObservableObject {
         ])
 
         self.reminderText = defaults.string(forKey: Keys.reminderText) ?? "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now"
+        self.selectedPack = defaults.string(forKey: Keys.selectedPack) ?? "Actualist"
         self.minIntervalMinutes = defaults.double(forKey: Keys.minIntervalMinutes)
         self.maxIntervalMinutes = defaults.double(forKey: Keys.maxIntervalMinutes)
         self.displayDurationSeconds = defaults.double(forKey: Keys.displayDurationSeconds)
@@ -74,6 +89,22 @@ final class SettingsStore: ObservableObject {
             }
         } catch {
             NSLog("[Appreciate] Login item update failed: %@", error.localizedDescription)
+        }
+    }
+
+    /// Select a pack by name, updating reminderText.
+    func selectPack(_ name: String) {
+        if let pack = SettingsStore.packs.first(where: { $0.name == name }) {
+            reminderText = pack.text
+            selectedPack = name
+        }
+    }
+
+    /// Called when user edits text — auto-switch to Custom if it no longer matches a pack.
+    func checkCustomPack() {
+        let trimmed = reminderText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !SettingsStore.packs.contains(where: { $0.text.trimmingCharacters(in: .whitespacesAndNewlines) == trimmed }) {
+            selectedPack = "Custom"
         }
     }
 

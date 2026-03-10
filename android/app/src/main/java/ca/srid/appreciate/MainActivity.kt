@@ -9,9 +9,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
@@ -27,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settings: SettingsStore
 
     private lateinit var reminderTextEdit: EditText
+    private lateinit var packSpinner: Spinner
     private lateinit var enabledSwitch: Switch
     private lateinit var bootSwitch: Switch
     private lateinit var minIntervalSeek: SeekBar
@@ -43,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         settings = SettingsStore(this)
 
         reminderTextEdit = findViewById(R.id.reminderTextEdit)
+        packSpinner = findViewById(R.id.packSpinner)
         enabledSwitch = findViewById(R.id.enabledSwitch)
         bootSwitch = findViewById(R.id.bootSwitch)
         minIntervalSeek = findViewById(R.id.minIntervalSeek)
@@ -82,6 +86,12 @@ class MainActivity : AppCompatActivity() {
         enabledSwitch.isChecked = settings.isEnabled
         bootSwitch.isChecked = settings.launchAtBoot
 
+        // Pack spinner
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, SettingsStore.PACK_NAMES)
+        packSpinner.adapter = adapter
+        val selectedIndex = SettingsStore.PACK_NAMES.indexOf(settings.selectedPack)
+        if (selectedIndex >= 0) packSpinner.setSelection(selectedIndex)
+
         // SeekBar: min interval 0.5-60 min (steps of 0.5)
         minIntervalSeek.max = 119 // 0.5 to 60, step 0.5 => (60-0.5)/0.5 = 119
         minIntervalSeek.progress = ((settings.minIntervalMinutes - 0.5f) / 0.5f).toInt()
@@ -115,6 +125,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
+        // Pack spinner
+        packSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                val name = SettingsStore.PACK_NAMES[position]
+                if (name != "Custom" && name != settings.selectedPack) {
+                    settings.selectPack(name)
+                    reminderTextEdit.setText(settings.reminderText)
+                }
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        // Auto-detect Custom when text is edited
+        reminderTextEdit.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                settings.reminderText = s.toString()
+                settings.checkCustomPack()
+                val idx = SettingsStore.PACK_NAMES.indexOf(settings.selectedPack)
+                if (idx >= 0 && packSpinner.selectedItemPosition != idx) {
+                    packSpinner.setSelection(idx)
+                }
+            }
+        })
+
         enabledSwitch.setOnCheckedChangeListener { _, isChecked ->
             settings.isEnabled = isChecked
             val serviceIntent = Intent(this, OverlayService::class.java)

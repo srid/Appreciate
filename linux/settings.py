@@ -11,9 +11,18 @@ import os
 import random
 
 
+# SYNC: Packs must match common/packs.json
+PACKS = {
+    "Actualist": "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
+    "Sensory": "What can you hear right now?\nFeel the air on your skin\nNotice the colours around you",
+    "Cooking": "Don't forget turkey in the oven",
+}
+PACK_NAMES = list(PACKS.keys()) + ["Custom"]
+
 # SYNC: Default values — keep in sync across all platforms
 DEFAULTS = {
     "reminder_text": "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
+    "selected_pack": "Actualist",
     "min_interval_minutes": 0.1,
     "max_interval_minutes": 1.5,
     "display_duration_seconds": 6.0,
@@ -99,6 +108,28 @@ class SettingsStore:
     def launch_at_login(self, value):
         self._data["launch_at_login"] = value
         self.save()
+
+    @property
+    def selected_pack(self):
+        return self._data["selected_pack"]
+
+    @selected_pack.setter
+    def selected_pack(self, value):
+        self._data["selected_pack"] = value
+        self.save()
+
+    def select_pack(self, name):
+        """Select a pack by name, updating reminder_text."""
+        if name in PACKS:
+            self.reminder_text = PACKS[name]
+            self._data["selected_pack"] = name
+            self.save()
+
+    def check_custom_pack(self):
+        """Auto-switch to Custom if text doesn't match any pack."""
+        trimmed = self.reminder_text.strip()
+        if not any(v.strip() == trimmed for v in PACKS.values()):
+            self._data["selected_pack"] = "Custom"
 
     @property
     def random_line(self):

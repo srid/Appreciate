@@ -1,4 +1,6 @@
+using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace Appreciate
 {
@@ -21,6 +23,11 @@ namespace Appreciate
             MinIntervalSlider.Value = s.MinIntervalMinutes;
             MaxIntervalSlider.Value = s.MaxIntervalMinutes;
             DurationSlider.Value = s.DisplayDurationSeconds;
+
+            // Pack ComboBox
+            PackComboBox.ItemsSource = SettingsStore.PackNames;
+            PackComboBox.SelectedItem = s.SelectedPack;
+
             UpdateLabels();
         }
 
@@ -57,6 +64,26 @@ namespace Appreciate
         {
             SaveSettings();
             ShowNowRequested?.Invoke();
+        }
+
+        private void OnPackChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (PackComboBox.SelectedItem is string name && name != "Custom")
+            {
+                SettingsStore.Instance.SelectPack(name);
+                ReminderTextBox.Text = SettingsStore.Instance.ReminderText;
+            }
+        }
+
+        private void OnReminderTextChanged(object sender, TextChangedEventArgs e)
+        {
+            var s = SettingsStore.Instance;
+            s.ReminderText = ReminderTextBox.Text;
+            s.CheckCustomPack();
+            if (PackComboBox.SelectedItem as string != s.SelectedPack)
+            {
+                PackComboBox.SelectedItem = s.SelectedPack;
+            }
         }
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)

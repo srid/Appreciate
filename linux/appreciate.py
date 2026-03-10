@@ -163,12 +163,24 @@ class AppreciateApp(Gtk.Application):
         text_label.set_halign(Gtk.Align.START)
         box.append(text_label)
 
+        # Pack dropdown
+        from settings import PACK_NAMES
+        pack_combo = Gtk.ComboBoxText()
+        for name in PACK_NAMES:
+            pack_combo.append_text(name)
+        current_idx = PACK_NAMES.index(self.settings.selected_pack) if self.settings.selected_pack in PACK_NAMES else len(PACK_NAMES) - 1
+        pack_combo.set_active(current_idx)
+        self._pack_combo = pack_combo
+        pack_combo.connect("changed", self._on_pack_changed)
+        box.append(pack_combo)
+
         text_scroll = Gtk.ScrolledWindow()
         text_scroll.set_min_content_height(80)
         text_view = Gtk.TextView()
         text_view.set_wrap_mode(Gtk.WrapMode.WORD)
         text_view.get_buffer().set_text(self.settings.reminder_text)
         text_view.get_buffer().connect("changed", self._on_text_changed)
+        self._text_view = text_view
         text_scroll.set_child(text_view)
         box.append(text_scroll)
 
@@ -261,9 +273,26 @@ class AppreciateApp(Gtk.Application):
         self._settings_window.set_visible(False)
         return True  # prevent destroy
 
+    def _on_pack_changed(self, combo):
+        from settings import PACK_NAMES
+        name = combo.get_active_text()
+        if name and name != "Custom":
+            self.settings.select_pack(name)
+            buf = self._text_view.get_buffer()
+            buf.handler_block_by_func(self._on_text_changed)
+            buf.set_text(self.settings.reminder_text)
+            buf.handler_unblock_by_func(self._on_text_changed)
+
     def _on_text_changed(self, buffer):
+        from settings import PACK_NAMES
         start, end = buffer.get_bounds()
         self.settings.reminder_text = buffer.get_text(start, end, False)
+        self.settings.check_custom_pack()
+        idx = PACK_NAMES.index(self.settings.selected_pack) if self.settings.selected_pack in PACK_NAMES else len(PACK_NAMES) - 1
+        if self._pack_combo.get_active() != idx:
+            self._pack_combo.handler_block_by_func(self._on_pack_changed)
+            self._pack_combo.set_active(idx)
+            self._pack_combo.handler_unblock_by_func(self._on_pack_changed)
 
     def _on_enabled_changed(self, switch, state):
         self.settings.enabled = state

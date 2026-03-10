@@ -13,6 +13,7 @@ class SettingsStore(context: Context) {
 
     companion object {
         private const val KEY_REMINDER_TEXT = "reminder_text"
+        private const val KEY_SELECTED_PACK = "selected_pack"
         private const val KEY_MIN_INTERVAL = "min_interval_minutes"
         private const val KEY_MAX_INTERVAL = "max_interval_minutes"
         private const val KEY_DISPLAY_DURATION = "display_duration_seconds"
@@ -28,11 +29,37 @@ class SettingsStore(context: Context) {
         private const val DEFAULT_DISPLAY_DURATION = 6f
         private const val DEFAULT_ENABLED = true
         private const val DEFAULT_LAUNCH_AT_BOOT = true
+
+        // SYNC: Packs must match common/packs.json
+        val PACKS = linkedMapOf(
+            "Actualist" to "Enjoy & appreciate simply being alive\nEnjoy & appreciate being here now",
+            "Sensory" to "What can you hear right now?\nFeel the air on your skin\nNotice the colours around you",
+            "Cooking" to "Don't forget turkey in the oven",
+        )
+        val PACK_NAMES = PACKS.keys.toList() + "Custom"
     }
 
     var reminderText: String
         get() = prefs.getString(KEY_REMINDER_TEXT, DEFAULT_REMINDER_TEXT) ?: DEFAULT_REMINDER_TEXT
         set(value) = prefs.edit().putString(KEY_REMINDER_TEXT, value).apply()
+
+    var selectedPack: String
+        get() = prefs.getString(KEY_SELECTED_PACK, "Actualist") ?: "Actualist"
+        set(value) = prefs.edit().putString(KEY_SELECTED_PACK, value).apply()
+
+    fun selectPack(name: String) {
+        PACKS[name]?.let { text ->
+            reminderText = text
+            selectedPack = name
+        }
+    }
+
+    fun checkCustomPack() {
+        val trimmed = reminderText.trim()
+        if (PACKS.values.none { it.trim() == trimmed }) {
+            selectedPack = "Custom"
+        }
+    }
 
     var minIntervalMinutes: Float
         get() = prefs.getFloat(KEY_MIN_INTERVAL, DEFAULT_MIN_INTERVAL)

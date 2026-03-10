@@ -1,0 +1,17 @@
+{
+  "packs": {
+    "Actualist": [
+      "Enjoy & appreciate simply being alive",
+      "Enjoy & appreciate being here now"
+    ],
+    "Sensory": [
+      "What can you hear right now?",
+      "Feel the air on your skin",
+      "Notice the colours around you"
+    ],
+    "Cooking": [
+      "Don't forget turkey in the oven"
+    ]
+  },
+  "default_pack": "Actualist"
+}
