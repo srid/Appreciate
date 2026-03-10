@@ -147,4 +147,4 @@ nix run github:srid/Appreciate
 
 ## License
 
-MIT
+[GPL-3.0-or-later](LICENSE)
