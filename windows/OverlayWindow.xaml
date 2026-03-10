@@ -19,12 +19,14 @@
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        TextAlignment="Center"
+                       TextWrapping="Wrap"
                        FontSize="48" />
         </Border>
         <TextBlock x:Name="ReminderTextNoPill"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
                    TextAlignment="Center"
+                   TextWrapping="Wrap"
                    FontSize="48" />
     </Grid>
 </Window>

@@ -71,13 +71,18 @@ class OverlayWindow(Gtk.Window):
         self._css_provider = None
         self._content = None
 
-        # SYNC: macOS uses ±25% of screen size as offset from center
+        # SYNC: macOS uses ±15% of screen size as offset from center
         if monitor_geometry:
             self.set_default_size(monitor_geometry.width, monitor_geometry.height)
             cx = monitor_geometry.width // 2
             cy = monitor_geometry.height // 2
-            margin_x = cx + int(monitor_geometry.width * random.uniform(-0.25, 0.25))
-            margin_y = cy + int(monitor_geometry.height * random.uniform(-0.25, 0.25))
+            margin_x = cx + int(monitor_geometry.width * random.uniform(-0.15, 0.15))
+            margin_y = cy + int(monitor_geometry.height * random.uniform(-0.15, 0.15))
+            # Clamp so text stays within screen bounds (10% padding from edges)
+            pad_x = int(monitor_geometry.width * 0.1)
+            pad_y = int(monitor_geometry.height * 0.1)
+            margin_x = max(pad_x, min(margin_x, monitor_geometry.width - pad_x))
+            margin_y = max(pad_y, min(margin_y, monitor_geometry.height - pad_y))
         else:
             self.set_default_size(1920, 1080)
             margin_x = random.randint(200, 1200)
@@ -98,7 +103,8 @@ class OverlayWindow(Gtk.Window):
         # Create label
         label = Gtk.Label(label=text)
         label.add_css_class("overlay-label")
-        label.set_wrap(False)
+        label.set_wrap(True)
+        label.set_max_width_chars(40)
 
         # Wrap in container for pill background
         if style.show_pill:

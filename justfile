@@ -1,5 +1,5 @@
 # Build and deploy Android app to connected phone (resets app data for fresh packs)
-deploy:
+deploy-android:
     nix develop -c sh -c '\
       cd android && ./gradlew assembleDebug && \
       cd .. && \
@@ -16,7 +16,7 @@ build-macos:
     cd macos && ./build.sh
 
 # Show a reminder immediately on the connected phone
-show:
+show-android:
     nix develop -c adb shell am startservice -a ca.srid.appreciate.ACTION_SHOW_NOW ca.srid.appreciate/.OverlayService
 
 # Build Windows app

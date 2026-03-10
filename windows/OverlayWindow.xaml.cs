@@ -95,9 +95,12 @@ namespace Appreciate
                 Opacity = 0.6
             };
 
-            // Position offset
-            var xOffset = (-0.25 + rng.NextDouble() * 0.5) * Width;
-            var yOffset = (-0.25 + rng.NextDouble() * 0.5) * Height;
+            // Position offset (±15% to avoid edge clipping)
+            var xOffset = (-0.15 + rng.NextDouble() * 0.3) * Width;
+            var yOffset = (-0.15 + rng.NextDouble() * 0.3) * Height;
+
+            // Max text width: 80% of screen to allow wrapping for long text
+            var maxTextWidth = Width * 0.8;
 
             var transform = new TransformGroup();
             transform.Children.Add(new RotateTransform(rotation));
@@ -111,6 +114,7 @@ namespace Appreciate
                 ReminderText.FontWeight = fontWeight;
                 ReminderText.Foreground = brush;
                 ReminderText.Effect = shadow;
+                ReminderText.MaxWidth = maxTextWidth;
 
                 PillBorder.Background = rng.NextDouble() < 0.5
                     ? new SolidColorBrush(Color.FromArgb(100, 0, 0, 0))
@@ -118,6 +122,7 @@ namespace Appreciate
                 PillBorder.RenderTransform = transform;
                 PillBorder.RenderTransformOrigin = new Point(0.5, 0.5);
                 PillBorder.Visibility = Visibility.Visible;
+                PillBorder.MaxWidth = maxTextWidth;
 
                 ReminderTextNoPill.Visibility = Visibility.Collapsed;
             }
@@ -129,6 +134,7 @@ namespace Appreciate
                 ReminderTextNoPill.FontWeight = fontWeight;
                 ReminderTextNoPill.Foreground = brush;
                 ReminderTextNoPill.Effect = shadow;
+                ReminderTextNoPill.MaxWidth = maxTextWidth;
                 ReminderTextNoPill.RenderTransform = transform;
                 ReminderTextNoPill.RenderTransformOrigin = new Point(0.5, 0.5);
 

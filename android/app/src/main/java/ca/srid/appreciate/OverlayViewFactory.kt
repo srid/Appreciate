@@ -96,8 +96,8 @@ class OverlayViewFactory(private val context: Context) {
             pillColor = pillColor,
             scaleBreathing = Math.random() < 0.5,
             targetScale = (1.0f + Math.random().toFloat() * 0.08f),
-            xOffsetFraction = (-0.25f + Math.random().toFloat() * 0.5f),
-            yOffsetFraction = (-0.25f + Math.random().toFloat() * 0.5f)
+            xOffsetFraction = (-0.15f + Math.random().toFloat() * 0.3f),
+            yOffsetFraction = (-0.15f + Math.random().toFloat() * 0.3f)
         )
     }
 
@@ -148,12 +148,23 @@ class OverlayViewFactory(private val context: Context) {
 
         container.addView(textView, params)
 
-        // Apply position offset after layout
+        // Apply position offset after layout, using actual container dimensions
+        // (handles dynamic screen sizes, e.g. foldable phones)
         container.post {
+            // Constrain text width to 80% of container to allow wrapping
+            val maxTextWidth = (container.width * 0.8f).toInt()
+            textView.maxWidth = maxTextWidth
+
             val maxXOffset = container.width * style.xOffsetFraction
             val maxYOffset = container.height * style.yOffsetFraction
-            textView.translationX = maxXOffset
-            textView.translationY = maxYOffset
+
+            // Clamp translation so the text stays within visible bounds
+            val halfW = textView.width / 2f
+            val halfH = textView.height / 2f
+            val maxClampX = (container.width / 2f - halfW).coerceAtLeast(0f)
+            val maxClampY = (container.height / 2f - halfH).coerceAtLeast(0f)
+            textView.translationX = maxXOffset.coerceIn(-maxClampX, maxClampX)
+            textView.translationY = maxYOffset.coerceIn(-maxClampY, maxClampY)
         }
 
         // Animate

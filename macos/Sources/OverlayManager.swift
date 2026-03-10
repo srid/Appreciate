@@ -18,9 +18,12 @@ final class OverlayManager {
         for screen in screens {
             let screenFrame = screen.frame
 
-            // Random position offset per screen
-            let xOffset = CGFloat.random(in: -screenFrame.width * 0.25 ... screenFrame.width * 0.25)
-            let yOffset = CGFloat.random(in: -screenFrame.height * 0.25 ... screenFrame.height * 0.25)
+            // Random position offset per screen (±15% to avoid edge clipping)
+            let xOffset = CGFloat.random(in: -screenFrame.width * 0.15 ... screenFrame.width * 0.15)
+            let yOffset = CGFloat.random(in: -screenFrame.height * 0.15 ... screenFrame.height * 0.15)
+
+            // Max text width: 80% of screen to allow wrapping for long text
+            let maxTextWidth = screenFrame.width * 0.8
 
             let window = NSWindow(
                 contentRect: screenFrame,
@@ -40,6 +43,7 @@ final class OverlayManager {
                 displayDuration: displayDuration,
                 xOffset: xOffset,
                 yOffset: yOffset,
+                maxTextWidth: maxTextWidth,
                 style: style
             ) { [weak self] in
                 self?.dismiss()
@@ -149,6 +153,7 @@ private struct AnimatingOverlayView: View {
     let displayDuration: Double
     let xOffset: CGFloat
     let yOffset: CGFloat
+    let maxTextWidth: CGFloat
     let style: OverlayStyle
     let onDismiss: () -> Void
 
@@ -157,18 +162,19 @@ private struct AnimatingOverlayView: View {
     @State private var currentScale: CGFloat = 1.0
     @State private var blur: CGFloat = 0.0
 
-    init(text: String, displayDuration: Double, xOffset: CGFloat, yOffset: CGFloat, style: OverlayStyle, onDismiss: @escaping () -> Void) {
+    init(text: String, displayDuration: Double, xOffset: CGFloat, yOffset: CGFloat, maxTextWidth: CGFloat, style: OverlayStyle, onDismiss: @escaping () -> Void) {
         self.text = text
         self.displayDuration = displayDuration
         self.xOffset = xOffset
         self.yOffset = yOffset
+        self.maxTextWidth = maxTextWidth
         self.style = style
         self.onDismiss = onDismiss
     }
 
     var body: some View {
         textContent
-            .fixedSize()
+            .frame(maxWidth: maxTextWidth)
             .padding(.horizontal, 40)
             .padding(.vertical, 24)
             .background(pillBackground)
