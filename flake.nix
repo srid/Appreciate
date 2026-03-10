@@ -2,6 +2,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    nix-appimage.url = "github:ralismark/nix-appimage";
     android-nixpkgs = {
       url = "github:tadfisher/android-nixpkgs";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -82,6 +83,7 @@
           };
         } // lib.optionalAttrs isLinux {
           packages.linux = linuxApp;
+          packages.linux-appimage = inputs.nix-appimage.bundlers.${system}.default linuxApp;
           packages.default = linuxApp;
           apps.linux = { type = "app"; program = lib.getExe linuxApp; };
           apps.default = { type = "app"; program = lib.getExe linuxApp; };

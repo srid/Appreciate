@@ -94,21 +94,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
 
-      - name: Build Linux app
-        run: nix build .#linux
+      - name: Build Linux AppImage
+        run: nix build .#linux-appimage
 
-      - name: Package Linux app
+      - name: Package Linux AppImage
         run: |
-          mkdir -p Appreciate-Linux
-          cp -rL result/bin/* Appreciate-Linux/
-          cp linux/appreciate.desktop Appreciate-Linux/
-          tar czf "Appreciate-Linux-${{ inputs.version }}.tar.gz" Appreciate-Linux/
+          cp -L result "Appreciate-Linux-${{ inputs.version }}.AppImage"
+          chmod +x "Appreciate-Linux-${{ inputs.version }}.AppImage"
 
-      - name: Upload Linux archive
+      - name: Upload Linux AppImage
         uses: actions/upload-artifact@v4
         with:
-          name: linux-tar
-          path: "Appreciate-Linux-*.tar.gz"
+          name: linux-appimage
+          path: "Appreciate-Linux-*.AppImage"
 
   release:
     needs: [build-macos, build-android, build-windows, build-linux]
@@ -165,4 +163,4 @@ jobs:
             macos-dmg/Appreciate-macOS-*.dmg
             android-apk/Appreciate-Android-*.apk
             windows-exe/Appreciate-Windows-*.exe
-            linux-tar/Appreciate-Linux-*.tar.gz
+            linux-appimage/Appreciate-Linux-*.AppImage

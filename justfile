@@ -22,3 +22,7 @@ show-android:
 # Build Windows app
 build-windows:
     cd windows && dotnet build
+
+# Build Linux AppImage
+build-linux:
+    nix build .#linux-appimage

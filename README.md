@@ -114,16 +114,15 @@ dotnet publish -c Release -r win-x64 --self-contained
 nix run github:srid/Appreciate
 ```
 
-### Install from tarball
+### Install from AppImage
 
-1. Download the latest `.tar.gz` from [Releases](../../releases)
-2. Extract and run:
+1. Download the latest `.AppImage` from [Releases](../../releases)
+2. Make executable and run:
    ```bash
-   tar xzf Appreciate-Linux-*.tar.gz
-   cd Appreciate-Linux
-   ./run.sh
+   chmod +x Appreciate-Linux-*.AppImage
+   ./Appreciate-Linux-*.AppImage
    ```
-   Requires Python 3 and GTK4 (`python3-gi`, `gir1.2-gtk-4.0`).
+   No dependencies needed — everything is bundled.
 
 ---
 
@@ -144,7 +143,7 @@ nix run github:srid/Appreciate
 1. Go to [Actions → Release](../../actions/workflows/release.yml)
 2. Click **Run workflow**
 3. Enter a version tag (e.g. `v1.1.0`)
-4. The workflow builds macOS DMG, Android APK, and Windows EXE, and attaches all to the Release
+4. The workflow builds macOS DMG, Android APK, Windows EXE, and Linux AppImage, and attaches all to the Release
 
 ## License
 
