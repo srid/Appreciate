@@ -183,78 +183,87 @@ class OverlayViewFactory(private val context: Context) {
 
         Log.d("OverlayViewFactory", "animateIn: kind=${style.animationKind} duration=${displayDuration}s")
 
-        // Set initial state
-        view.alpha = 0f
-        val initialTransX = view.translationX
-        val initialTransY = view.translationY
-        when (style.animationKind) {
-            AnimationKind.SLIDE_TOP -> view.translationY = initialTransY - 400f
-            AnimationKind.SLIDE_BOTTOM -> view.translationY = initialTransY + 400f
-            AnimationKind.SLIDE_LEFT -> view.translationX = initialTransX - 600f
-            AnimationKind.SLIDE_RIGHT -> view.translationX = initialTransX + 600f
-            AnimationKind.SCALE_UP -> {
-                view.scaleX = 0.3f
-                view.scaleY = 0.3f
-            }
-            AnimationKind.BLUR_FADE, AnimationKind.FADE -> { /* just opacity */ }
-        }
-
-        // Entrance animation using ViewPropertyAnimator (ignores animator_duration_scale)
-        val enter = view.animate()
-            .alpha(1f)
-            .setDuration(600)
-
-        when (style.animationKind) {
-            AnimationKind.SLIDE_TOP, AnimationKind.SLIDE_BOTTOM -> enter.translationY(initialTransY)
-            AnimationKind.SLIDE_LEFT, AnimationKind.SLIDE_RIGHT -> enter.translationX(initialTransX)
-            AnimationKind.SCALE_UP -> enter.scaleX(1f).scaleY(1f)
-            else -> {}
-        }
-
-        enter.start()
-
-        // Schedule exit using Handler (not affected by animation scale)
-        val holdMs = (displayDuration * 1000).toLong()
-        val exitDelayMs = 600 + holdMs
-        Log.d("OverlayViewFactory", "Exit scheduled in ${exitDelayMs}ms (entrance=600 + hold=${holdMs})")
-
-        handler.postDelayed({
-            Log.d("OverlayViewFactory", "EXIT animation starting now")
-
-            val exit = view.animate()
-                .alpha(0f)
-                .setDuration(1500)
-
-            if (style.animationKind == AnimationKind.SCALE_UP) {
-                exit.scaleX(1.5f).scaleY(1.5f)
+        // IMPORTANT: Leave alpha at 1f initially so that the window is registered
+        // with Android's compositor (SurfaceFlinger) as fully visible. This prevents
+        // the overlay from being culled when the user is constantly touching the
+        // screen (e.g. scrolling), which starves the animator and would otherwise
+        // cause the overlay to flash and vanish instantly.
+        //
+        // We defer setting alpha = 0f and starting the entrance animation to the
+        // next frame via post(), after the window is already composited.
+        view.post {
+            view.alpha = 0f
+            val initialTransX = view.translationX
+            val initialTransY = view.translationY
+            when (style.animationKind) {
+                AnimationKind.SLIDE_TOP -> view.translationY = initialTransY - 400f
+                AnimationKind.SLIDE_BOTTOM -> view.translationY = initialTransY + 400f
+                AnimationKind.SLIDE_LEFT -> view.translationX = initialTransX - 600f
+                AnimationKind.SLIDE_RIGHT -> view.translationX = initialTransX + 600f
+                AnimationKind.SCALE_UP -> {
+                    view.scaleX = 0.3f
+                    view.scaleY = 0.3f
+                }
+                AnimationKind.BLUR_FADE, AnimationKind.FADE -> { /* just opacity */ }
             }
 
-            exit.withEndAction {
-                Log.d("OverlayViewFactory", "EXIT complete — calling onDismiss")
-                onDismiss()
+            // Entrance animation using ViewPropertyAnimator (ignores animator_duration_scale)
+            val enter = view.animate()
+                .alpha(1f)
+                .setDuration(600)
+
+            when (style.animationKind) {
+                AnimationKind.SLIDE_TOP, AnimationKind.SLIDE_BOTTOM -> enter.translationY(initialTransY)
+                AnimationKind.SLIDE_LEFT, AnimationKind.SLIDE_RIGHT -> enter.translationX(initialTransX)
+                AnimationKind.SCALE_UP -> enter.scaleX(1f).scaleY(1f)
+                else -> {}
             }
 
-            exit.start()
-        }, exitDelayMs)
+            enter.start()
 
-        // Scale breathing using ViewPropertyAnimator loop
-        if (style.scaleBreathing) {
-            fun breatheLoop() {
-                view.animate()
-                    .scaleX(style.targetScale)
-                    .scaleY(style.targetScale)
+            // Schedule exit using Handler (not affected by animation scale)
+            val holdMs = (displayDuration * 1000).toLong()
+            val exitDelayMs = 600 + holdMs
+            Log.d("OverlayViewFactory", "Exit scheduled in ${exitDelayMs}ms (entrance=600 + hold=${holdMs})")
+
+            handler.postDelayed({
+                Log.d("OverlayViewFactory", "EXIT animation starting now")
+
+                val exit = view.animate()
+                    .alpha(0f)
                     .setDuration(1500)
-                    .withEndAction {
-                        view.animate()
-                            .scaleX(1f)
-                            .scaleY(1f)
-                            .setDuration(1500)
-                            .withEndAction { breatheLoop() }
-                            .start()
-                    }
-                    .start()
+
+                if (style.animationKind == AnimationKind.SCALE_UP) {
+                    exit.scaleX(1.5f).scaleY(1.5f)
+                }
+
+                exit.withEndAction {
+                    Log.d("OverlayViewFactory", "EXIT complete — calling onDismiss")
+                    onDismiss()
+                }
+
+                exit.start()
+            }, exitDelayMs)
+
+            // Scale breathing using ViewPropertyAnimator loop
+            if (style.scaleBreathing) {
+                fun breatheLoop() {
+                    view.animate()
+                        .scaleX(style.targetScale)
+                        .scaleY(style.targetScale)
+                        .setDuration(1500)
+                        .withEndAction {
+                            view.animate()
+                                .scaleX(1f)
+                                .scaleY(1f)
+                                .setDuration(1500)
+                                .withEndAction { breatheLoop() }
+                                .start()
+                        }
+                        .start()
+                }
+                handler.postDelayed({ breatheLoop() }, 600)
             }
-            handler.postDelayed({ breatheLoop() }, 600)
-        }
+        } // end view.post — everything above runs after the compositor registers the window
     }
 }
