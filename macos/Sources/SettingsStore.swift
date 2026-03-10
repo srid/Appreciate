@@ -75,7 +75,7 @@ final class SettingsStore: ObservableObject {
 
     private init() {
         defaults.register(defaults: [
-            Keys.selectedPack: "Actualism Method",
+            Keys.selectedPack: "Sensory",
             Keys.minIntervalMinutes: 0.1,
             Keys.maxIntervalMinutes: 1.5,
             Keys.displayDurationSeconds: 6.0,
@@ -91,7 +91,7 @@ final class SettingsStore: ObservableObject {
             self.packs = SettingsStore.defaultPacks
         }
 
-        self.selectedPack = defaults.string(forKey: Keys.selectedPack) ?? "Actualism Method"
+        self.selectedPack = defaults.string(forKey: Keys.selectedPack) ?? "Sensory"
         self.minIntervalMinutes = defaults.double(forKey: Keys.minIntervalMinutes)
         self.maxIntervalMinutes = defaults.double(forKey: Keys.maxIntervalMinutes)
         self.displayDurationSeconds = defaults.double(forKey: Keys.displayDurationSeconds)
@@ -100,7 +100,7 @@ final class SettingsStore: ObservableObject {
 
         // Ensure selected pack exists
         if packs[selectedPack] == nil {
-            selectedPack = packs.keys.sorted().first ?? "Actualism Method"
+            selectedPack = packs.keys.sorted().first ?? "Sensory"
         }
 
         updateLoginItem()
@@ -125,7 +125,7 @@ final class SettingsStore: ObservableObject {
         guard packs.count > 1, packs[name] != nil else { return false }
         packs.removeValue(forKey: name)
         if selectedPack == name {
-            selectedPack = packs.keys.sorted().first ?? "Actualism Method"
+            selectedPack = packs.keys.sorted().first ?? "Sensory"
         }
         return true
     }

@@ -21,7 +21,7 @@ DEFAULT_PACKS = {
 # SYNC: Default values — keep in sync across all platforms
 DEFAULTS = {
     "packs": dict(DEFAULT_PACKS),
-    "selected_pack": "Actualism Method",
+    "selected_pack": "Sensory",
     "min_interval_minutes": 0.1,
     "max_interval_minutes": 1.5,
     "display_duration_seconds": 6.0,
@@ -41,7 +41,7 @@ class SettingsStore:
         self._load()
         # Ensure selected pack exists
         if self.selected_pack not in self.packs:
-            self.selected_pack = sorted(self.packs.keys())[0] if self.packs else "Actualism Method"
+            self.selected_pack = sorted(self.packs.keys())[0] if self.packs else "Sensory"
 
     def _load(self):
         try:

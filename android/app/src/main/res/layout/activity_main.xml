@@ -55,12 +55,37 @@
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
-        <Spinner
-            android:id="@+id/packSpinner"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="#1E1E1E"
-            android:layout_marginBottom="8dp" />
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Spinner
+                android:id="@+id/packSpinner"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="#1E1E1E" />
+
+            <Button
+                android:id="@+id/addPackButton"
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:text="+"
+                android:textSize="18sp"
+                android:textAllCaps="false"
+                android:layout_marginStart="8dp" />
+
+            <Button
+                android:id="@+id/deletePackButton"
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:text="−"
+                android:textSize="18sp"
+                android:textAllCaps="false"
+                android:layout_marginStart="4dp" />
+        </LinearLayout>
 
         <EditText
             android:id="@+id/reminderTextEdit"

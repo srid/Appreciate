@@ -28,7 +28,7 @@ namespace Appreciate
 
         /// <summary>User's packs (editable dictionary).</summary>
         public Dictionary<string, string> Packs { get; set; } = new(DefaultPacks);
-        public string SelectedPack { get; set; } = "Actualism Method";
+        public string SelectedPack { get; set; } = "Sensory";
         public float MinIntervalMinutes { get; set; } = 0.1f;
         public float MaxIntervalMinutes { get; set; } = 1.5f;
         public float DisplayDurationSeconds { get; set; } = 6f;
@@ -94,7 +94,7 @@ namespace Appreciate
                     var store = JsonSerializer.Deserialize<SettingsStore>(json) ?? new SettingsStore();
                     // Ensure selected pack exists
                     if (!store.Packs.ContainsKey(store.SelectedPack))
-                        store.SelectedPack = store.Packs.Keys.OrderBy(k => k).FirstOrDefault() ?? "Actualism Method";
+                        store.SelectedPack = store.Packs.Keys.OrderBy(k => k).FirstOrDefault() ?? "Sensory";
                     return store;
                 }
             }

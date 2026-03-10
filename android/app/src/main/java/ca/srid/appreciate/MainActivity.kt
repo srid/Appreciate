@@ -87,11 +87,7 @@ class MainActivity : AppCompatActivity() {
         bootSwitch.isChecked = settings.launchAtBoot
 
         // Pack spinner
-        val packNames = settings.packNames
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, packNames)
-        packSpinner.adapter = adapter
-        val selectedIndex = packNames.indexOf(settings.selectedPack)
-        if (selectedIndex >= 0) packSpinner.setSelection(selectedIndex)
+        refreshPackSpinner()
 
         // SeekBar: min interval 0.5-60 min (steps of 0.5)
         minIntervalSeek.max = 119 // 0.5 to 60, step 0.5 => (60-0.5)/0.5 = 119
@@ -149,6 +145,40 @@ class MainActivity : AppCompatActivity() {
                 settings.reminderText = s.toString()
             }
         })
+
+        // Add pack button
+        findViewById<Button>(R.id.addPackButton).setOnClickListener {
+            val input = android.widget.EditText(this)
+            input.hint = "Pack name"
+            android.app.AlertDialog.Builder(this)
+                .setTitle("New Pack")
+                .setMessage("Enter a name for the new reminder pack:")
+                .setView(input)
+                .setPositiveButton("Add") { _, _ ->
+                    val name = input.text.toString().trim()
+                    if (settings.addPack(name)) {
+                        refreshPackSpinner()
+                        reminderTextEdit.setText("")
+                    } else {
+                        Toast.makeText(this, "Pack name already exists or is empty", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+        }
+
+        // Delete pack button
+        findViewById<Button>(R.id.deletePackButton).setOnClickListener {
+            if (settings.packs.size <= 1) {
+                Toast.makeText(this, "Cannot delete the last pack", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val name = settings.selectedPack
+            if (settings.deletePack(name)) {
+                refreshPackSpinner()
+                reminderTextEdit.setText(settings.reminderText)
+            }
+        }
 
         enabledSwitch.setOnCheckedChangeListener { _, isChecked ->
             settings.isEnabled = isChecked
@@ -213,6 +243,14 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.grantAlarmButton).setOnClickListener {
             requestAlarmPermission()
         }
+    }
+
+    private fun refreshPackSpinner() {
+        val packNames = settings.packNames
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, packNames)
+        packSpinner.adapter = adapter
+        val selectedIndex = packNames.indexOf(settings.selectedPack)
+        if (selectedIndex >= 0) packSpinner.setSelection(selectedIndex)
     }
 
     private fun updateMinLabel() {

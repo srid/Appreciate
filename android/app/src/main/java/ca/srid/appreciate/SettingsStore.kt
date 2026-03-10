@@ -59,7 +59,7 @@ class SettingsStore(context: Context) {
         }
 
     var selectedPack: String
-        get() = prefs.getString(KEY_SELECTED_PACK, "Actualism Method") ?: "Actualism Method"
+        get() = prefs.getString(KEY_SELECTED_PACK, "Sensory") ?: "Sensory"
         set(value) = prefs.edit().putString(KEY_SELECTED_PACK, value).apply()
 
     /** The reminder text of the currently selected pack. */
