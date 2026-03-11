@@ -7,6 +7,8 @@ Default packs are loaded from packs.json bundled alongside the .py files.
 import json
 import os
 import random
+import time
+import urllib.request
 
 
 def _load_bundled_packs():
@@ -44,15 +46,52 @@ DEFAULTS = {
     "launch_at_login": True,
 }
 
-CONFIG_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "appreciate")
+CONFIG_DIR = os.path.join(
+    os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "appreciate"
+)
 CONFIG_FILE = os.path.join(CONFIG_DIR, "settings.json")
+
+# In-memory cache for remote packs
+_remote_cache: dict[str, list[str]] = {}
+_remote_fetch_time: dict[str, float] = {}
+_CACHE_DURATION = 3600  # 1 hour
+
+
+def _is_remote_pack(text: str) -> bool:
+    trimmed = text.strip()
+    return trimmed.startswith("https://") and "\n" not in trimmed
+
+
+def _fetch_remote_pack(url: str) -> list[str]:
+    now = time.time()
+
+    # Check cache
+    if url in _remote_cache:
+        fetch_time = _remote_fetch_time.get(url, 0)
+        if now - fetch_time < _CACHE_DURATION:
+            return _remote_cache[url]
+
+    # Fetch
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            text = response.read().decode("utf-8")
+            lines = [l.strip() for l in text.split("\n") if l.strip()]
+            _remote_cache[url] = lines
+            _remote_fetch_time[url] = now
+            return lines
+    except Exception:
+        pass
+
+    return _remote_cache.get(url, [])
 
 
 class SettingsStore:
     """Persists user preferences to JSON."""
 
     def __init__(self):
-        self._data = {k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULTS.items()}
+        self._data = {
+            k: (dict(v) if isinstance(v, dict) else v) for k, v in DEFAULTS.items()
+        }
         self._load()
         # Ensure selected pack exists
         if self.selected_pack not in self.packs:
@@ -174,5 +213,9 @@ class SettingsStore:
     @property
     def random_line(self):
         """Returns a random line from the current pack's reminder text."""
-        lines = [l.strip() for l in self.reminder_text.split("\n") if l.strip()]
-        return random.choice(lines) if lines else self.reminder_text
+        text = self.reminder_text
+        if _is_remote_pack(text):
+            lines = _fetch_remote_pack(text.strip())
+            return random.choice(lines) if lines else ""
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+        return random.choice(lines) if lines else text

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 
 namespace Appreciate
@@ -21,6 +22,12 @@ namespace Appreciate
 
         /// <summary>Loaded from packs.json at startup.</summary>
         private static readonly (Dictionary<string, string> Packs, string DefaultPack) Bundled = LoadBundledPacks();
+
+        // In-memory cache for remote packs
+        private static readonly Dictionary<string, List<string>> _remoteCache = new();
+        private static readonly Dictionary<string, DateTime> _remoteFetchTime = new();
+        private static readonly TimeSpan _cacheDuration = TimeSpan.FromHours(1);
+        private static readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(10) };
 
         private static (Dictionary<string, string>, string) LoadBundledPacks()
         {
@@ -103,10 +110,45 @@ namespace Appreciate
         {
             get
             {
-                var lines = ReminderText.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                if (lines.Length == 0) return ReminderText;
-                return lines[Random.Shared.Next(lines.Length)];
+                var text = ReminderText;
+                if (IsRemotePack(text))
+                {
+                    var lines = FetchRemotePack(text.Trim());
+                    return lines.Count > 0 ? lines[Random.Shared.Next(lines.Count)] : "";
+                }
+                var localLines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                return localLines.Length > 0 ? localLines[Random.Shared.Next(localLines.Length)] : text;
             }
+        }
+
+        private static bool IsRemotePack(string text)
+        {
+            var trimmed = text.Trim();
+            return trimmed.StartsWith("https://") && !trimmed.Contains('\n');
+        }
+
+        private static List<string> FetchRemotePack(string url)
+        {
+            if (_remoteCache.TryGetValue(url, out var cached))
+            {
+                if (_remoteFetchTime.TryGetValue(url, out var fetchTime))
+                {
+                    if (DateTime.Now - fetchTime < _cacheDuration)
+                        return cached;
+                }
+            }
+
+            try
+            {
+                var text = _httpClient.GetStringAsync(url).Result;
+                var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+                _remoteCache[url] = lines;
+                _remoteFetchTime[url] = DateTime.Now;
+                return lines;
+            }
+            catch { }
+
+            return _remoteCache.TryGetValue(url, out var fallback) ? fallback : new List<string>();
         }
 
         public void Save()
