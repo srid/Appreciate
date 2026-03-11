@@ -21,9 +21,12 @@ class HeadphoneManager(private val context: Context) {
         private const val TAG = "HeadphoneManager"
     }
 
-    /** True when any headphone (Bluetooth A2DP or wired) is connected. */
-    var isHeadphoneConnected: Boolean = false
-        private set
+    /**
+     * True when any headphone (Bluetooth A2DP or wired) is connected.
+     * Always queries the current device state — never stale.
+     */
+    val isHeadphoneConnected: Boolean
+        get() = checkDevices()
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
@@ -48,7 +51,7 @@ class HeadphoneManager(private val context: Context) {
 
     /** Start listening for headphone connect/disconnect. */
     fun register() {
-        updateState()
+        lastKnownState = checkDevices()
         val filter = IntentFilter().apply {
             addAction(BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED)
             addAction(AudioManager.ACTION_HEADSET_PLUG)
@@ -69,12 +72,13 @@ class HeadphoneManager(private val context: Context) {
     /** Optional callback invoked when headphone connection state changes. */
     var onConnectionChanged: ((Boolean) -> Unit)? = null
 
-    /** Checks current audio devices to determine headphone state. */
-    private fun updateState() {
+    private var lastKnownState: Boolean = false
+
+    /** Queries current audio output devices to determine headphone state. */
+    private fun checkDevices(): Boolean {
         val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-        val wasConnected = isHeadphoneConnected
-        isHeadphoneConnected = devices.any { device ->
+        return devices.any { device ->
             device.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP ||
             device.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
             device.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
@@ -82,9 +86,15 @@ class HeadphoneManager(private val context: Context) {
             (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
                 device.type == AudioDeviceInfo.TYPE_BLE_HEADSET)
         }
-        Log.d(TAG, "updateState: isHeadphoneConnected=$isHeadphoneConnected")
-        if (isHeadphoneConnected != wasConnected) {
-            onConnectionChanged?.invoke(isHeadphoneConnected)
+    }
+
+    /** Called by the BroadcastReceiver to notify listeners of state changes. */
+    private fun updateState() {
+        val connected = checkDevices()
+        Log.d(TAG, "updateState: isHeadphoneConnected=$connected")
+        if (connected != lastKnownState) {
+            lastKnownState = connected
+            onConnectionChanged?.invoke(connected)
         }
     }
 }
