@@ -38,6 +38,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var minIntervalLabel: TextView
     private lateinit var maxIntervalLabel: TextView
     private lateinit var durationLabel: TextView
+    private lateinit var voiceSwitch: Switch
+    private lateinit var headphoneStatusLabel: TextView
+    private lateinit var headphoneManager: HeadphoneManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,12 +58,22 @@ class MainActivity : AppCompatActivity() {
         minIntervalLabel = findViewById(R.id.minIntervalLabel)
         maxIntervalLabel = findViewById(R.id.maxIntervalLabel)
         durationLabel = findViewById(R.id.durationLabel)
+        voiceSwitch = findViewById(R.id.voiceSwitch)
+        headphoneStatusLabel = findViewById(R.id.headphoneStatusLabel)
+
+        headphoneManager = HeadphoneManager(this)
+        headphoneManager.onConnectionChanged = { connected ->
+            runOnUiThread { updateHeadphoneStatus(connected) }
+        }
+        headphoneManager.register()
 
         loadSettings()
         setupListeners()
         checkOverlayPermission()
         checkAlarmPermission()
         requestNotificationPermission()
+        requestBluetoothPermission()
+        updateHeadphoneStatus(headphoneManager.isHeadphoneConnected)
     }
 
     private fun requestNotificationPermission() {
@@ -85,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         reminderTextEdit.setText(settings.reminderText)
         enabledSwitch.isChecked = settings.isEnabled
         bootSwitch.isChecked = settings.launchAtBoot
+        voiceSwitch.isChecked = settings.voiceWhenHeadphones
 
         // Pack spinner
         refreshPackSpinner()
@@ -194,6 +208,10 @@ class MainActivity : AppCompatActivity() {
 
         bootSwitch.setOnCheckedChangeListener { _, isChecked ->
             settings.launchAtBoot = isChecked
+        }
+
+        voiceSwitch.setOnCheckedChangeListener { _, isChecked ->
+            settings.voiceWhenHeadphones = isChecked
         }
 
         minIntervalSeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -335,5 +353,34 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         checkOverlayPermission()
         checkAlarmPermission()
+        updateHeadphoneStatus(headphoneManager.isHeadphoneConnected)
+    }
+
+    override fun onDestroy() {
+        headphoneManager.unregister()
+        super.onDestroy()
+    }
+
+    private fun updateHeadphoneStatus(connected: Boolean) {
+        if (connected) {
+            headphoneStatusLabel.text = "🔊 Headphones connected"
+            headphoneStatusLabel.setTextColor(0xFF66BB6A.toInt())  // green
+        } else {
+            headphoneStatusLabel.text = "🔇 No headphones detected"
+            headphoneStatusLabel.setTextColor(0xFF888888.toInt())  // grey
+        }
+    }
+
+    private fun requestBluetoothPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+                != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                    1002
+                )
+            }
+        }
     }
 }

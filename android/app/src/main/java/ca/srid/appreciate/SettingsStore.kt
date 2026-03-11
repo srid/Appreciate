@@ -20,12 +20,14 @@ class SettingsStore(private val context: Context) {
         private const val KEY_DISPLAY_DURATION = "display_duration_seconds"
         private const val KEY_ENABLED = "enabled"
         private const val KEY_LAUNCH_AT_BOOT = "launch_at_boot"
+        private const val KEY_VOICE_WHEN_HEADPHONES = "voice_when_headphones"
 
         private const val DEFAULT_MIN_INTERVAL = 0.1f
         private const val DEFAULT_MAX_INTERVAL = 1.5f
         private const val DEFAULT_DISPLAY_DURATION = 6f
         private const val DEFAULT_ENABLED = true
         private const val DEFAULT_LAUNCH_AT_BOOT = true
+        private const val DEFAULT_VOICE_WHEN_HEADPHONES = true
     }
 
     /** Reads default packs from assets/packs.json. */
@@ -131,6 +133,10 @@ class SettingsStore(private val context: Context) {
     var launchAtBoot: Boolean
         get() = prefs.getBoolean(KEY_LAUNCH_AT_BOOT, DEFAULT_LAUNCH_AT_BOOT)
         set(value) = prefs.edit().putBoolean(KEY_LAUNCH_AT_BOOT, value).apply()
+
+    var voiceWhenHeadphones: Boolean
+        get() = prefs.getBoolean(KEY_VOICE_WHEN_HEADPHONES, DEFAULT_VOICE_WHEN_HEADPHONES)
+        set(value) = prefs.edit().putBoolean(KEY_VOICE_WHEN_HEADPHONES, value).apply()
 
     /** Returns a random line from the current pack's reminder text. */
     val randomLine: String

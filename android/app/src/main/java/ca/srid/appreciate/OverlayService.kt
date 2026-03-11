@@ -35,12 +35,17 @@ class OverlayService : Service() {
     private lateinit var timerManager: TimerManager
     private lateinit var overlayViewFactory: OverlayViewFactory
     private var overlayWakeLock: PowerManager.WakeLock? = null
+    private lateinit var ttsManager: TtsManager
+    private lateinit var headphoneManager: HeadphoneManager
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         timerManager = TimerManager(this)
         overlayViewFactory = OverlayViewFactory(this)
+        ttsManager = TtsManager(this)
+        headphoneManager = HeadphoneManager(this)
+        headphoneManager.register()
         Log.d(TAG, "Service created")
     }
 
@@ -114,6 +119,12 @@ class OverlayService : Service() {
 
         Log.d(TAG, "Showing overlay: \"$text\" for ${duration}s")
 
+        // Voice dictation: speak the reminder when headphones are connected
+        if (settings.voiceWhenHeadphones && headphoneManager.isHeadphoneConnected) {
+            Log.d(TAG, "Headphones connected — speaking reminder via TTS")
+            ttsManager.speak(text)
+        }
+
         // Acquire a wake lock for the entire overlay duration + animations
         // This prevents the CPU from sleeping, which would cause the dismiss
         // timer to be deferred and fire instantly on unlock (the "flash" bug).
@@ -176,6 +187,8 @@ class OverlayService : Service() {
     override fun onDestroy() {
         dismissOverlay()
         timerManager.cancel()
+        ttsManager.shutdown()
+        headphoneManager.unregister()
         super.onDestroy()
         Log.d(TAG, "Service destroyed")
     }

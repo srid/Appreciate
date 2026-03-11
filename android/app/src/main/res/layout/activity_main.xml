@@ -130,7 +130,27 @@
             android:text="Launch at Boot"
             android:textColor="#FFFFFF"
             android:textSize="16sp"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="16dp" />
+
+        <!-- Voice when headphones -->
+        <Switch
+            android:id="@+id/voiceSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🎧 Voice when headphones connected"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/headphoneStatusLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔇 No headphones detected"
+            android:textColor="#888888"
+            android:textSize="13sp"
+            android:layout_marginBottom="24dp"
+            android:paddingStart="4dp" />
 
         <!-- Min Interval -->
         <TextView

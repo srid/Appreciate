@@ -20,6 +20,7 @@ Available for **macOS**, **Android**, **Windows**, and **Linux**.
 - 🎲 **Anti-habituation** — everything is randomized (timing, position, color, font, animation style)
 - 🖥️🖥️ **Multi-monitor** — appears on all screens simultaneously (macOS, Windows)
 - 🎯 **Background app** — menubar on macOS, foreground service on Android, system tray on Windows
+- 🎧 **Voice mode** — automatically speaks reminders via TTS when headphones are connected (Android)
 
 ---
 
@@ -78,6 +79,13 @@ Appreciate registers as an Android Screensaver (Daydream). To show reminders on 
 1. Open Appreciate → tap **"🌙 Open Screen Saver Settings"**
 2. Select **Appreciate** as your screen saver
 3. Reminders will now appear on your lock screen / AOD when idle or charging
+
+### Voice Mode (Headphones)
+
+When Bluetooth headphones (or wired/USB headsets) are connected, Appreciate automatically **speaks reminders aloud** via Text-to-Speech — perfect for strolling, walking, or exercising without looking at your screen. The visual overlay still appears simultaneously.
+
+- **Enabled by default** — toggle off with **"🎧 Voice when headphones connected"** in settings
+- Works with Bluetooth A2DP, wired headphones, USB headsets, and BLE headsets
 
 ---
 
