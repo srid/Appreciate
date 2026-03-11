@@ -86,6 +86,7 @@ When Bluetooth headphones (or wired/USB headsets) are connected, Appreciate auto
 
 - **Enabled by default** — toggle off with **"🎧 Voice when headphones connected"** in settings
 - Works with Bluetooth A2DP, wired headphones, USB headsets, and BLE headsets
+- **Anti-habituation** — speech rate, pitch, and voice are randomized on each utterance so you don't tune it out
 
 ---
 
