@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         settings = SettingsStore(this)
+        settings.prefetchRemotePacks()
 
         reminderTextEdit = findViewById(R.id.reminderTextEdit)
         packSpinner = findViewById(R.id.packSpinner)

@@ -46,6 +46,7 @@ class OverlayService : Service() {
         ttsManager = TtsManager(this)
         headphoneManager = HeadphoneManager(this)
         headphoneManager.register()
+        SettingsStore(this).prefetchRemotePacks()
         Log.d(TAG, "Service created")
     }
 

@@ -44,6 +44,7 @@ class AppreciateScreensaver : DreamService() {
         isScreenBright = true // full brightness so text is clearly visible
 
         settings = SettingsStore(this)
+        settings.prefetchRemotePacks()
 
         container = FrameLayout(this).apply {
             setBackgroundColor(Color.BLACK)

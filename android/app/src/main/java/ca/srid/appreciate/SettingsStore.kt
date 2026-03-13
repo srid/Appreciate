@@ -147,7 +147,8 @@ class SettingsStore(private val context: Context) {
         get() {
             val text = reminderText
             if (isRemotePack(text)) {
-                val lines = fetchRemotePack(text.trim())
+                val url = text.trim()
+                val lines = remoteCache[url] ?: emptyList()
                 return lines.randomOrNull() ?: ""
             }
             val lines = text.lines()
@@ -161,29 +162,41 @@ class SettingsStore(private val context: Context) {
         return trimmed.startsWith("https://") && !trimmed.contains("\n")
     }
 
-    private fun fetchRemotePack(url: String): List<String> {
+    fun prefetchRemotePacks() {
+        Thread {
+            for ((name, content) in packs) {
+                if (isRemotePack(content)) {
+                    fetchRemotePack(content.trim())
+                }
+            }
+        }.start()
+    }
+
+    private fun fetchRemotePack(url: String) {
         val now = System.currentTimeMillis()
 
         // Check cache
         remoteCache[url]?.let { cached ->
             val fetchTime = remoteFetchTime[url] ?: 0
-            if (now - fetchTime < CACHE_DURATION_MS) {
-                return cached
+            if (now - fetchTime < CACHE_DURATION_MS && cached.isNotEmpty()) {
+                return
             }
         }
 
-        // Fetch
+        // Fetch in background thread
         try {
             val connection = java.net.URL(url).openConnection()
             connection.connectTimeout = 10000
             connection.readTimeout = 10000
             val text = connection.getInputStream().bufferedReader().readText()
             val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
-            remoteCache[url] = lines
-            remoteFetchTime[url] = now
-            return lines
-        } catch (_: Exception) {}
-
-        return remoteCache[url] ?: emptyList()
+            if (lines.isNotEmpty()) {
+                remoteCache[url] = lines
+                remoteFetchTime[url] = now
+                android.util.Log.d("SettingsStore", "Fetched remote pack: $url (${lines.size} lines)")
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("SettingsStore", "Failed to fetch remote pack: ${e.message}")
+        }
     }
 }
