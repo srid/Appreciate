@@ -28,6 +28,10 @@ class SettingsStore(private val context: Context) {
         private const val DEFAULT_ENABLED = true
         private const val DEFAULT_LAUNCH_AT_BOOT = true
         private const val DEFAULT_VOICE_WHEN_HEADPHONES = true
+
+        private val remoteCache = mutableMapOf<String, List<String>>()
+        private val remoteFetchTime = mutableMapOf<String, Long>()
+        private const val CACHE_DURATION_MS = 60 * 60 * 1000L
     }
 
     /** Reads default packs from assets/packs.json. */
@@ -141,9 +145,58 @@ class SettingsStore(private val context: Context) {
     /** Returns a random line from the current pack's reminder text. */
     val randomLine: String
         get() {
-            val lines = reminderText.lines()
+            val text = reminderText
+            if (isRemotePack(text)) {
+                val url = text.trim()
+                val lines = remoteCache[url] ?: emptyList()
+                return lines.randomOrNull() ?: ""
+            }
+            val lines = text.lines()
                 .map { it.trim() }
                 .filter { it.isNotEmpty() }
-            return lines.randomOrNull() ?: reminderText
+            return lines.randomOrNull() ?: text
         }
+
+    private fun isRemotePack(text: String): Boolean {
+        val trimmed = text.trim()
+        return trimmed.startsWith("https://") && !trimmed.contains("\n")
+    }
+
+    fun prefetchRemotePacks() {
+        Thread {
+            for ((name, content) in packs) {
+                if (isRemotePack(content)) {
+                    fetchRemotePack(content.trim())
+                }
+            }
+        }.start()
+    }
+
+    private fun fetchRemotePack(url: String) {
+        val now = System.currentTimeMillis()
+
+        // Check cache
+        remoteCache[url]?.let { cached ->
+            val fetchTime = remoteFetchTime[url] ?: 0
+            if (now - fetchTime < CACHE_DURATION_MS && cached.isNotEmpty()) {
+                return
+            }
+        }
+
+        // Fetch in background thread
+        try {
+            val connection = java.net.URL(url).openConnection()
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
+            val text = connection.getInputStream().bufferedReader().readText()
+            val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            if (lines.isNotEmpty()) {
+                remoteCache[url] = lines
+                remoteFetchTime[url] = now
+                android.util.Log.d("SettingsStore", "Fetched remote pack: $url (${lines.size} lines)")
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("SettingsStore", "Failed to fetch remote pack: ${e.message}")
+        }
+    }
 }

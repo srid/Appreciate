@@ -8,6 +8,11 @@ final class SettingsStore: ObservableObject {
 
     private let defaults = UserDefaults.standard
 
+    // In-memory cache for remote packs
+    private static var remoteCache: [String: [String]] = [:]
+    private static var remoteFetchTime: [String: Date] = [:]
+    private static let cacheDuration: TimeInterval = 3600 // 1 hour
+
     private enum Keys {
         static let packs = "packs"
         static let selectedPack = "selectedPack"
@@ -157,7 +162,48 @@ final class SettingsStore: ObservableObject {
 
     /// Returns a random line from the current pack's reminder text.
     var randomLine: String {
-        let lines = reminderText.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        return lines.randomElement() ?? reminderText
+        let text = reminderText
+        if isRemotePack(text) {
+            let lines = fetchRemotePack(url: text.trimmingCharacters(in: .whitespacesAndNewlines))
+            return lines.randomElement() ?? ""
+        }
+        let lines = text.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        return lines.randomElement() ?? text
+    }
+
+    private func isRemotePack(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.hasPrefix("https://") && !trimmed.contains("\n")
+    }
+
+    private func fetchRemotePack(url: String) -> [String] {
+        // Check cache
+        if let cached = Self.remoteCache[url],
+           let fetchTime = Self.remoteFetchTime[url],
+           Date().timeIntervalSince(fetchTime) < Self.cacheDuration {
+            return cached
+        }
+
+        // Fetch synchronously
+        guard let urlObj = URL(string: url) else { return Self.remoteCache[url] ?? [] }
+        var request = URLRequest(url: urlObj)
+        request.timeoutInterval = 10
+        request.httpMethod = "GET"
+
+        do {
+            let data = try Data(contentsOf: urlObj, options: .alwaysMapped)
+            if let text = String(data: data, encoding: .utf8) {
+                let lines = text.components(separatedBy: "\n")
+                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                    .filter { !$0.isEmpty }
+                Self.remoteCache[url] = lines
+                Self.remoteFetchTime[url] = Date()
+                return lines
+            }
+        } catch {
+            NSLog("[Appreciate] Failed to fetch remote pack: %@", error.localizedDescription)
+        }
+
+        return Self.remoteCache[url] ?? []
     }
 }
