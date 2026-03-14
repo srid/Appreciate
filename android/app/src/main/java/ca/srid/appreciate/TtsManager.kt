@@ -50,8 +50,18 @@ class TtsManager(private val context: Context) : TextToSpeech.OnInitListener {
                 ready = true
             }
 
+            // SYNC: voice locale allowlist — Western + Indian English accents only
+            val allowedLocales = setOf(
+                Locale.US,                          // American
+                Locale.UK,                          // British
+                Locale("en", "AU"),          // Australian
+                Locale("en", "CA"),          // Canadian
+                Locale("en", "IE"),          // Irish
+                Locale("en", "NZ"),          // New Zealand
+                Locale("en", "IN"),          // Indian
+            )
             availableVoices = tts.voices
-                ?.filter { !it.isNetworkConnectionRequired && it.locale.language == Locale.US.language }
+                ?.filter { !it.isNetworkConnectionRequired && it.locale in allowedLocales }
                 ?.toList()
                 ?: emptyList()
 
