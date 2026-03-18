@@ -30,3 +30,12 @@ build-windows:
 # Build Linux AppImage
 build-linux:
     nix build .#linux-appimage
+
+# List recent GitHub releases
+releases:
+    gh release list --limit 5
+
+# Create a new GitHub release (triggers CI build for all platforms)
+release version:
+    gh workflow run release.yml -f version={{version}}
+    @echo "🚀 Release {{version}} triggered. Watch: gh run list --workflow=release.yml"
